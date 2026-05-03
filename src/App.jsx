@@ -694,7 +694,7 @@ export default function App() {
               </div>
 
               <button onClick={async () => {
-                if (window.confirm("Tüm ilerleme silinecek. Emin misin?")) {
+                if (confirm("Tüm ilerleme silinecek. Emin misin?")) {
                   await saveStats(defaultStats());
                 }
               }} style={{
