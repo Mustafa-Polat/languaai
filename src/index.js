@@ -5,12 +5,9 @@ import App from './App';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 
-// Service Worker kayıt (PWA offline desteği)
+// Eski service worker'lari temizle
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then((reg) => console.log('SW kayıtlı:', reg.scope))
-      .catch((err) => console.log('SW hatası:', err));
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
   });
 }
