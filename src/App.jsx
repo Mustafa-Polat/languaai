@@ -525,7 +525,7 @@ export default function App() {
         {screen === "flashcard" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <button onClick={() => nav("home")} style={{ ...btn(false), fontSize: 12 }}><- Geri</button>
+              <button onClick={() => nav("home")} style={{ ...btn(false), fontSize: 12 }}>&larr; Geri</button>
               <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>
                 {deckComplete ? "Tamamlandı!" : `${cardIdx + 1} / ${deck.length}`}
               </span>
@@ -624,7 +624,7 @@ export default function App() {
         {screen === "quiz" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <button onClick={() => nav("home")} style={{ ...btn(false), fontSize: 12 }}><- Geri</button>
+              <button onClick={() => nav("home")} style={{ ...btn(false), fontSize: 12 }}>&larr; Geri</button>
               <span style={{ fontSize: 13, color: "#60a5fa" }}>{sessionScore.c}/{sessionScore.t} doğru</span>
               <span style={{ fontSize: 12, color: "rgba(232,228,217,0.35)" }}>{level}</span>
             </div>
@@ -691,7 +691,7 @@ export default function App() {
                       background: "#60a5fa", border: "none", borderRadius: 14, color: "#fff",
                       padding: "16px", fontSize: 15, fontWeight: "bold",
                       cursor: "pointer", fontFamily: "inherit", width: "100%",
-                    }}>Sonraki Soru -></button>
+                    }}>Sonraki Soru </button>
                   </div>
                 )}
               </div>
