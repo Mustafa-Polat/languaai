@@ -55,6 +55,8 @@ export default function App() {
   const [sessionScore, setSessionScore] = useState({ c: 0, t: 0 });
   const [libSearch, setLibSearch] = useState("");
   const [libLevel, setLibLevel] = useState("A1");
+  const [exampleSentence, setExampleSentence] = useState(null);
+  const [exampleLoading, setExampleLoading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("lingua_u");
@@ -159,6 +161,45 @@ export default function App() {
   }, [sel, quiz, prog, saveProg]);
 
   const nav = (s) => { setScreen(s); setFlipped(false); };
+
+  const speak = useCallback((word) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang = "en-US";
+    utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
+  }, []);
+
+
+  const fetchExample = async (word) => {
+    setExampleSentence(null);
+    setExampleLoading(true);
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      if (!res.ok) throw new Error("not found");
+      const data = await res.json();
+      let found = null;
+      for (const entry of data) {
+        for (const meaning of entry.meanings || []) {
+          for (const def of meaning.definitions || []) {
+            if (def.example) { found = def.example; break; }
+          }
+          if (found) break;
+        }
+        if (found) break;
+      }
+      setExampleSentence(found);
+    } catch { setExampleSentence(null); }
+    setExampleLoading(false);
+  };
+
+  useEffect(() => {
+    if (screen === "flashcard" && flipped && deck[cardIdx]) {
+      fetchExample(deck[cardIdx].word);
+    }
+  }, [screen, flipped, cardIdx]);
+
 
   const learned = Object.keys(prog.learned).length;
   const acc = prog.qTotal > 0 ? Math.round((prog.qCorrect / prog.qTotal) * 100) : 0;
@@ -296,14 +337,22 @@ export default function App() {
                   {!flipped ? (
                     <div>
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{level} - Ingilizce</div>
-                      <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+                        <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
+                        <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                      </div>
                       <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Cevirmek icin dokun</div>
                     </div>
                   ) : (
                     <div style={{ width: "100%" }}>
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Turkce</div>
-                      <div style={{ fontSize: 32, fontWeight: "bold", marginBottom: 18 }}>{deck[cardIdx].turkish}</div>
-                      <div style={{ background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "12px 18px", fontSize: 14, color: "rgba(232,228,217,0.6)", fontStyle: "italic" }}>"{deck[cardIdx].example}"</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 18 }}>
+                        <div style={{ fontSize: 32, fontWeight: "bold" }}>{deck[cardIdx].turkish}</div>
+                        <button onClick={() => speak(deck[cardIdx].word)} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                      </div>
+                      <div style={{ background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "12px 18px", fontSize: 14, color: "rgba(232,228,217,0.6)", fontStyle: "italic" }}>
+                        {exampleLoading ? "🌐 Yükleniyor..." : exampleSentence ? `"${exampleSentence}"` : `"${deck[cardIdx].example}"`}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -330,7 +379,10 @@ export default function App() {
               <div>
                 <div style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 20, padding: "32px 24px", marginBottom: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 12, color: "rgba(96,165,250,0.55)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>Bu kelimenin Turkce anlami nedir?</div>
-                  <div style={{ fontSize: 42, fontWeight: "bold", color: "#60a5fa" }}>{quiz.word}</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+                    <div style={{ fontSize: 42, fontWeight: "bold", color: "#60a5fa" }}>{quiz.word}</div>
+                    <button onClick={() => speak(quiz.word)} style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                  </div>
                 </div>
                 <div style={{ display: "grid", gap: 10, marginBottom: 18 }}>
                   {quiz.opts.map((opt, i) => {
@@ -381,6 +433,7 @@ export default function App() {
               {libWords.slice(0, 200).map((w, i) => (
                 <div key={i} style={{ background: prog.learned[w.word] ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (prog.learned[w.word] ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
+                    <button onClick={() => speak(w.word)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 14, padding: "0 6px 0 0", verticalAlign: "middle" }} title="Telaffuzu dinle">🔊</button>
                     <span style={{ fontWeight: "bold", color: prog.learned[w.word] ? "#34d399" : "#e8e4d9", marginRight: 10, fontSize: 14 }}>{w.word}</span>
                     <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{w.turkish}</span>
                   </div>
