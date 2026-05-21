@@ -333,7 +333,7 @@ export default function App() {
               </div>
             ) : deck[cardIdx] ? (
               <div>
-                <div onClick={() => !flipped && setFlipped(true)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "52px 32px", minHeight: 260, textAlign: "center", cursor: flipped ? "default" : "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div onClick={() => setFlipped(f => !f)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "52px 32px", minHeight: 260, textAlign: "center", cursor: "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {!flipped ? (
                     <div>
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{level} - Ingilizce</div>
@@ -341,7 +341,7 @@ export default function App() {
                         <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
                         <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
-                      <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Cevirmek icin dokun</div>
+                      <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Cevir / Geri Don</div>
                     </div>
                   ) : (
                     <div style={{ width: "100%" }}>
