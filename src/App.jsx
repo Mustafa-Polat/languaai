@@ -15,6 +15,108 @@ for (const [lvl, words] of Object.entries(RAW)) {
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 
+// ── RUSÇA KELİMELER (Vocabulary Lessons 1–5) ──────────────────────────────
+const RU_RAW = [
+  {w:"А",t:"and, but"},{w:"Администратор",t:"administrator, manager"},{w:"Актёр",t:"actor"},
+  {w:"Актриса",t:"actress"},{w:"Аналитический",t:"analytical"},{w:"Архитектор",t:"architect"},
+  {w:"Аудитория",t:"audience"},{w:"Бабушка",t:"grandmother"},{w:"База",t:"base"},
+  {w:"Балет",t:"ballet"},{w:"Бар",t:"bar"},{w:"Билет",t:"ticket"},
+  {w:"Биржа",t:"stock exchange"},{w:"Большой",t:"big"},{w:"Босс",t:"boss"},
+  {w:"Брат",t:"brother"},{w:"Бутерброд",t:"sandwich"},{w:"Бухгалтер",t:"accountant"},
+  {w:"Бюро",t:"bureau"},{w:"В",t:"in"},{w:"Вечер",t:"evening"},
+  {w:"Вечеринка",t:"party"},{w:"Вместе",t:"together"},{w:"Вода",t:"water"},
+  {w:"Вокзал",t:"train station"},{w:"Восток",t:"east"},{w:"Врач",t:"doctor"},
+  {w:"Время",t:"time"},{w:"Все",t:"all, everything"},{w:"Встреча",t:"meeting"},
+  {w:"Вход",t:"entrance"},{w:"Вы",t:"you"},{w:"Газета",t:"newspaper"},
+  {w:"Где",t:"where"},{w:"Говорить",t:"to speak"},{w:"Город",t:"city, town"},
+  {w:"Да",t:"yes"},{w:"Давай",t:"let's"},{w:"Дантист",t:"dentist"},
+  {w:"Дверь",t:"door"},{w:"Девушка",t:"girl"},{w:"Дедушка",t:"grandfather"},
+  {w:"Делать",t:"to do"},{w:"Дело",t:"business"},{w:"День",t:"day"},
+  {w:"Деньги",t:"money"},{w:"Джинсы",t:"jeans"},{w:"Дизайнер",t:"designer"},
+  {w:"Директор",t:"director, general manager"},{w:"До свидания",t:"good bye"},
+  {w:"Добрый",t:"kind, good"},{w:"Доктор",t:"doctor"},{w:"Документ",t:"document"},
+  {w:"Дом",t:"house, home"},{w:"Домохозяйка",t:"housewife"},{w:"Дочь",t:"daughter"},
+  {w:"Друг",t:"friend"},{w:"Душа",t:"soul"},{w:"Дядя",t:"uncle"},
+  {w:"Есть",t:"to be / to have"},{w:"Жена",t:"wife"},{w:"Журнал",t:"magazine"},
+  {w:"Журналист",t:"journalist"},{w:"Журналистка",t:"journalist (f)"},{w:"Запад",t:"west"},
+  {w:"Здесь",t:"here"},{w:"Здравствуйте",t:"hello, formal greeting"},
+  {w:"Знать",t:"to know"},{w:"И",t:"and"},{w:"Из",t:"from"},
+  {w:"Извините",t:"excuse me; I'm sorry"},{w:"Индекс",t:"postal code; index"},
+  {w:"Инспектор",t:"inspector"},{w:"Инспекция",t:"inspection"},
+  {w:"Инструктор",t:"instructor"},{w:"Интересно",t:"interesting (adverb)"},
+  {w:"Интернет",t:"Internet"},{w:"Йогурт",t:"yogurt"},
+  {w:"Каждый",t:"every, each"},{w:"Казино",t:"casino"},{w:"Как",t:"how"},
+  {w:"Канал",t:"canal, channel"},{w:"Карта",t:"map / card"},
+  {w:"Кафе",t:"café"},{w:"Качественный",t:"quality (adjective)"},
+  {w:"Кино",t:"movie"},{w:"Кинотеатр",t:"movie theater"},
+  {w:"Клиент",t:"client"},{w:"Клуб",t:"club"},{w:"Книга",t:"book"},
+  {w:"Когда",t:"when"},{w:"Коллега",t:"colleague"},{w:"Комната",t:"room"},
+  {w:"Компания",t:"company"},{w:"Компьютер",t:"computer"},
+  {w:"Компьютерный",t:"computer (adj)"},{w:"Кондуктор",t:"conductor, trainman"},
+  {w:"Концерт",t:"concert, show"},{w:"Копир",t:"copier"},{w:"Кот",t:"cat"},
+  {w:"Кофе",t:"coffee"},{w:"Крокодил",t:"crocodile"},{w:"Кто",t:"who"},
+  {w:"Лампа",t:"lamp"},{w:"Лекция",t:"lecture"},{w:"Лимон",t:"lemon"},
+  {w:"Магазин",t:"shop"},{w:"Мама",t:"mother"},{w:"Менеджер",t:"manager"},
+  {w:"Метро",t:"subway, underground, tube"},{w:"Много",t:"many, much"},
+  {w:"Мой",t:"my"},{w:"Море",t:"sea"},{w:"Муж",t:"husband"},
+  {w:"Музей",t:"museum"},{w:"Музыка",t:"music, tune"},{w:"Мы",t:"we"},
+  {w:"На",t:"on, at"},{w:"Не",t:"not"},{w:"Нет",t:"no"},{w:"Но",t:"but"},
+  {w:"Новость",t:"news"},{w:"Новый",t:"new"},{w:"Нормально",t:"ok, normal"},
+  {w:"Ночь",t:"night"},{w:"Обедать",t:"to have dinner/lunch"},
+  {w:"Обычно",t:"usually"},{w:"Он",t:"he"},{w:"Она",t:"she"},
+  {w:"Они",t:"they"},{w:"Оно",t:"it"},{w:"Опера",t:"opera"},
+  {w:"Остров",t:"island"},{w:"Отдыхать",t:"to rest, to holiday"},
+  {w:"Отель",t:"hotel"},{w:"Откуда",t:"where from"},{w:"Офис",t:"office"},
+  {w:"Очень",t:"very, very much"},{w:"Очки",t:"glasses"},
+  {w:"Папа",t:"papa, father"},{w:"Папка",t:"folder"},{w:"Парк",t:"park"},
+  {w:"Пароль",t:"password"},{w:"Партнёр",t:"partner"},
+  {w:"Пенсионер",t:"retired, pensioner"},{w:"Перспектива",t:"perspective, outlook"},
+  {w:"Пиво",t:"beer"},{w:"Пить",t:"to drink"},{w:"План",t:"plan"},
+  {w:"Пока",t:"bye! (informal)"},{w:"Показать",t:"to show (show me)"},
+  {w:"Политик",t:"politician"},{w:"Понимать",t:"to understand"},
+  {w:"Почта",t:"postal service; mail"},{w:"Преподаватель",t:"teacher"},
+  {w:"Привет",t:"hello (informal)"},{w:"Принтер",t:"printer"},
+  {w:"Приятно",t:"pleasure, pleasant"},{w:"Проблема",t:"problem"},
+  {w:"Программист",t:"programmer"},{w:"Проект",t:"project"},
+  {w:"Психика",t:"psyche"},{w:"Работа",t:"work, job"},
+  {w:"Работать",t:"to work"},{w:"Радио",t:"radio"},
+  {w:"Рассказать",t:"to tell (tell me)"},{w:"Ребёнок",t:"child"},
+  {w:"Редактор",t:"editor"},{w:"Родитель",t:"parent"},
+  {w:"Рок",t:"rock (music)"},{w:"Русский",t:"Russian"},
+  {w:"Ручка",t:"pen"},{w:"Сайт",t:"(web)site"},{w:"Сахар",t:"sugar"},
+  {w:"Север",t:"north"},{w:"Сейчас",t:"now"},{w:"Секретарь",t:"secretary"},
+  {w:"Семья",t:"family"},{w:"Сериал",t:"TV series"},{w:"Сестра",t:"sister"},
+  {w:"Система",t:"system"},{w:"Скайп",t:"Skype"},{w:"Сканер",t:"scanner"},
+  {w:"Сколько",t:"how many/how much"},{w:"Словарь",t:"dictionary, vocabulary"},
+  {w:"Слушать",t:"to listen"},{w:"Смотреть",t:"to look, to watch"},
+  {w:"Собака",t:"dog"},{w:"Спасибо",t:"thank you"},{w:"Спать",t:"to sleep"},
+  {w:"Спелеолог",t:"speleologist"},{w:"Спорт",t:"sport"},
+  {w:"Спортивный",t:"sport, sporty"},{w:"Спортсмен",t:"sportsman"},
+  {w:"Спортсменка",t:"sportswoman"},{w:"Стадион",t:"stadium"},
+  {w:"Стажёр",t:"intern"},{w:"Статья",t:"article"},
+  {w:"Стол",t:"desk, table"},{w:"Страна",t:"country"},{w:"Стул",t:"chair"},
+  {w:"Сумка",t:"bag"},{w:"Сын",t:"son"},{w:"Так",t:"so"},
+  {w:"Там",t:"there"},{w:"Театр",t:"theater"},{w:"Текст",t:"text"},
+  {w:"Телевизор",t:"TV set"},{w:"Телефон",t:"telephone"},
+  {w:"Тётя",t:"aunt"},{w:"Тоже",t:"also"},{w:"Только",t:"only"},
+  {w:"Ты",t:"you"},{w:"У",t:"at"},{w:"Улица",t:"street"},
+  {w:"Утро",t:"morning"},{w:"Факс",t:"fax"},{w:"Филолог",t:"philologist"},
+  {w:"Фирма",t:"firm, company"},{w:"Фото",t:"photo"},
+  {w:"Футбол",t:"football"},{w:"Хороший",t:"good, fine, nice"},
+  {w:"Хорошо",t:"ok, good, well"},{w:"Центр",t:"center"},
+  {w:"Чай",t:"tea"},{w:"Час",t:"hour"},{w:"Часто",t:"often"},
+  {w:"Часы",t:"clock, watch"},{w:"Чей",t:"whose"},
+  {w:"Читать",t:"to read"},{w:"Что",t:"what"},
+  {w:"Чуть-чуть",t:"a little bit"},{w:"Школа",t:"school"},
+  {w:"Шутка",t:"joke"},{w:"Экономист",t:"economist"},
+  {w:"Экран",t:"screen"},{w:"Это",t:"it"},{w:"Юг",t:"south"},
+  {w:"Юрист",t:"lawyer"},{w:"Я",t:"I"},
+];
+
+const RU_LIBRARY = {
+  "L1": RU_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L1", lang: "ru" }))
+};
+
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
 function makeQuiz(word, turkish, allWords) {
@@ -43,7 +145,9 @@ export default function App() {
   const [authErr, setAuthErr] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [screen, setScreen] = useState("home");
+  const [lang, setLang] = useState("en"); // "en" | "ru"
   const [level, setLevel] = useState("A1");
+  const [ruLevel, setRuLevel] = useState("L1");
   const [prog, setProg] = useState(emptyProgress());
   const [deck, setDeck] = useState([]);
   const [cardIdx, setCardIdx] = useState(0);
@@ -124,10 +228,15 @@ export default function App() {
     setForm({ username: "", password: "" });
   };
 
+  const currentLibrary = useCallback(() => {
+    if (lang === "ru") return RU_LIBRARY[ruLevel] || [];
+    return LIBRARY[level] || [];
+  }, [lang, level, ruLevel]);
+
   const startCards = useCallback(() => {
-    setDeck(shuffle(LIBRARY[level] || []).slice(0, 15));
+    setDeck(shuffle(currentLibrary()).slice(0, 15));
     setCardIdx(0); setFlipped(false); setDone(false); setScreen("flashcard");
-  }, [level]);
+  }, [currentLibrary]);
 
   const nextCard = useCallback(async (rating) => {
     const card = deck[cardIdx];
@@ -141,14 +250,14 @@ export default function App() {
 
   const startQuiz = useCallback(() => {
     setScreen("quiz"); setSessionScore({ c: 0, t: 0 }); nextQuiz();
-  }, [level]);
+  }, [lang, level, ruLevel]);
 
   const nextQuiz = useCallback(() => {
-    const all = LIBRARY[level] || [];
+    const all = lang === "ru" ? (RU_LIBRARY[ruLevel] || []) : (LIBRARY[level] || []);
     const w = all[Math.floor(Math.random() * all.length)];
     setQuiz(makeQuiz(w.word, w.turkish, all));
     setSel(null); setCorrect(null);
-  }, [level]);
+  }, [lang, level, ruLevel]);
 
   const submitQuiz = useCallback(async (idx) => {
     if (sel !== null || !quiz) return;
@@ -162,14 +271,14 @@ export default function App() {
 
   const nav = (s) => { setScreen(s); setFlipped(false); };
 
-  const speak = useCallback((word) => {
+  const speak = useCallback((word, wordLang) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(word);
-    utt.lang = "en-US";
+    utt.lang = (wordLang || lang) === "ru" ? "ru-RU" : "en-US";
     utt.rate = 0.9;
     window.speechSynthesis.speak(utt);
-  }, []);
+  }, [lang]);
 
 
   const fetchExample = async (word) => {
@@ -203,10 +312,13 @@ export default function App() {
 
   const learned = Object.keys(prog.learned).length;
   const acc = prog.qTotal > 0 ? Math.round((prog.qCorrect / prog.qTotal) * 100) : 0;
-  const libWords = (LIBRARY[libLevel] || []).filter(w =>
-    !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
-    w.turkish.toLowerCase().includes(libSearch.toLowerCase())
-  );
+  const libWords = lang === "ru"
+    ? (RU_LIBRARY[ruLevel] || []).filter(w =>
+        !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
+        w.turkish.toLowerCase().includes(libSearch.toLowerCase()))
+    : (LIBRARY[libLevel] || []).filter(w =>
+        !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
+        w.turkish.toLowerCase().includes(libSearch.toLowerCase()));
 
   const S = {
     page: { minHeight: "100vh", background: "#0a0a0f", fontFamily: "Georgia,serif", color: "#e8e4d9" },
@@ -275,10 +387,23 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{ fontSize: 48, marginBottom: 8 }}>&#127891;</div>
               <h1 style={{ fontSize: 28, fontWeight: "bold", margin: "0 0 6px", color: "#ffd95a" }}>Merhaba, {user.username}!</h1>
-              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} kelime - Offline</p>
+              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} İng + {RU_RAW.length} Rus kelime</p>
             </div>
+
+            {/* Dil Seçici */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 5 }}>
+              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"]].map(([l, label]) => (
+                <button key={l} onClick={() => setLang(l)} style={{
+                  flex: 1, background: lang === l ? "#ffd95a" : "transparent",
+                  border: "none", borderRadius: 8, color: lang === l ? "#0a0a0f" : "rgba(232,228,217,0.5)",
+                  padding: "11px", fontSize: 14, fontWeight: lang === l ? "bold" : "normal",
+                  cursor: "pointer", fontFamily: "inherit"
+                }}>{label}</button>
+              ))}
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 24 }}>
-              {[["&#11088;", learned, "Ogrenilen"], ["&#127919;", acc + "%", "Dogruluk"], ["&#129504;", prog.qTotal, "Quiz"]].map(([icon, val, label]) => (
+              {[["&#11088;", learned, "Öğrenilen"], ["&#127919;", acc + "%", "Doğruluk"], ["&#129504;", prog.qTotal, "Quiz"]].map(([icon, val, label]) => (
                 <div key={label} style={{ ...S.card, textAlign: "center", padding: "18px 10px" }}>
                   <div style={{ fontSize: 22, marginBottom: 4 }} dangerouslySetInnerHTML={{ __html: icon }} />
                   <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffd95a" }}>{val}</div>
@@ -288,13 +413,21 @@ export default function App() {
             </div>
             <div style={{ ...S.card, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "rgba(232,228,217,0.35)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Seviye</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                {LEVELS.map(l => (
-                  <button key={l} onClick={() => setLevel(l)} style={{ ...S.btn(level === l), flex: 1, padding: "12px 0", fontSize: 14 }}>
-                    {l}<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{(LIBRARY[l]||[]).length}</div>
+              {lang === "en" ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {LEVELS.map(l => (
+                    <button key={l} onClick={() => setLevel(l)} style={{ ...S.btn(level === l), flex: 1, padding: "12px 0", fontSize: 14 }}>
+                      {l}<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{(LIBRARY[l]||[]).length}</div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => setRuLevel("L1")} style={{ ...S.btn(true), flex: 1, padding: "12px 0", fontSize: 14 }}>
+                    Ders 1–5<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{RU_RAW.length}</div>
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <button onClick={startCards} style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
@@ -336,10 +469,10 @@ export default function App() {
                 <div onClick={() => setFlipped(f => !f)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "52px 32px", minHeight: 260, textAlign: "center", cursor: "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {!flipped ? (
                     <div>
-                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{level} - Ingilizce</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{lang === "ru" ? "🇷🇺 Rusça" : (level + " - İngilizce")}</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
                         <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
-                        <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                        <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word, lang); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
                       <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Cevir / Geri Don</div>
                     </div>
@@ -348,7 +481,7 @@ export default function App() {
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Turkce</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 18 }}>
                         <div style={{ fontSize: 32, fontWeight: "bold" }}>{deck[cardIdx].turkish}</div>
-                        <button onClick={() => speak(deck[cardIdx].word)} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                        <button onClick={() => speak(deck[cardIdx].word, lang)} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
                       <div style={{ background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "12px 18px", fontSize: 14, color: "rgba(232,228,217,0.6)", fontStyle: "italic" }}>
                         {exampleLoading ? "🌐 Yükleniyor..." : exampleSentence ? `"${exampleSentence}"` : `"${deck[cardIdx].example}"`}
@@ -378,10 +511,10 @@ export default function App() {
             {quiz && (
               <div>
                 <div style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 20, padding: "32px 24px", marginBottom: 20, textAlign: "center" }}>
-                  <div style={{ fontSize: 12, color: "rgba(96,165,250,0.55)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>Bu kelimenin Turkce anlami nedir?</div>
+                  <div style={{ fontSize: 12, color: "rgba(96,165,250,0.55)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>Bu kelimenin İngilizce anlamı nedir?</div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
                     <div style={{ fontSize: 42, fontWeight: "bold", color: "#60a5fa" }}>{quiz.word}</div>
-                    <button onClick={() => speak(quiz.word)} style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
+                    <button onClick={() => speak(quiz.word, lang)} style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                   </div>
                 </div>
                 <div style={{ display: "grid", gap: 10, marginBottom: 18 }}>
@@ -419,21 +552,38 @@ export default function App() {
         {screen === "library" && (
           <div>
             <h2 style={{ margin: "0 0 6px", fontSize: 20, color: "#ffd95a" }}>Kelime Listesi</h2>
-            <p style={{ color: "rgba(232,228,217,0.35)", fontSize: 13, marginBottom: 18 }}>{Object.values(LIBRARY).flat().length} kelime</p>
-            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-              {LEVELS.map(l => (
-                <button key={l} onClick={() => setLibLevel(l)} style={{ ...S.btn(libLevel === l), flex: 1 }}>
-                  {l}<div style={{ fontSize: 10, opacity: 0.6 }}>{(LIBRARY[l]||[]).length}</div>
-                </button>
+            <p style={{ color: "rgba(232,228,217,0.35)", fontSize: 13, marginBottom: 14 }}>{Object.values(LIBRARY).flat().length} İng + {RU_RAW.length} Rus kelime</p>
+            {/* Dil seçici */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 4 }}>
+              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"]].map(([l, label]) => (
+                <button key={l} onClick={() => setLang(l)} style={{
+                  flex: 1, background: lang === l ? "#ffd95a" : "transparent",
+                  border: "none", borderRadius: 7, color: lang === l ? "#0a0a0f" : "rgba(232,228,217,0.5)",
+                  padding: "9px", fontSize: 13, fontWeight: lang === l ? "bold" : "normal",
+                  cursor: "pointer", fontFamily: "inherit"
+                }}>{label}</button>
               ))}
             </div>
-            <input value={libSearch} onChange={e => setLibSearch(e.target.value)} placeholder="Kelime veya Turkce ara..." style={{ ...S.inp, marginBottom: 14 }} />
+            {lang === "en" ? (
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {LEVELS.map(l => (
+                  <button key={l} onClick={() => setLibLevel(l)} style={{ ...S.btn(libLevel === l), flex: 1 }}>
+                    {l}<div style={{ fontSize: 10, opacity: 0.6 }}>{(LIBRARY[l]||[]).length}</div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div style={{ marginBottom: 14, padding: "8px 14px", background: "rgba(255,217,90,0.07)", border: "1px solid rgba(255,217,90,0.2)", borderRadius: 10, fontSize: 13, color: "rgba(232,228,217,0.6)" }}>
+                🇷🇺 Rusça — Dersler 1–5 ({RU_RAW.length} kelime)
+              </div>
+            )}
+            <input value={libSearch} onChange={e => setLibSearch(e.target.value)} placeholder={lang === "ru" ? "Rusça veya İngilizce ara..." : "Kelime veya Türkçe ara..."} style={{ ...S.inp, marginBottom: 14 }} />
             <div style={{ fontSize: 11, color: "rgba(232,228,217,0.25)", marginBottom: 10 }}>{libWords.length} kelime</div>
             <div style={{ display: "grid", gap: 5, maxHeight: "60vh", overflowY: "auto" }}>
               {libWords.slice(0, 200).map((w, i) => (
                 <div key={i} style={{ background: prog.learned[w.word] ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (prog.learned[w.word] ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <button onClick={() => speak(w.word)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 14, padding: "0 6px 0 0", verticalAlign: "middle" }} title="Telaffuzu dinle">🔊</button>
+                    <button onClick={() => speak(w.word, lang)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 14, padding: "0 6px 0 0", verticalAlign: "middle" }} title="Telaffuzu dinle">🔊</button>
                     <span style={{ fontWeight: "bold", color: prog.learned[w.word] ? "#34d399" : "#e8e4d9", marginRight: 10, fontSize: 14 }}>{w.word}</span>
                     <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{w.turkish}</span>
                   </div>
