@@ -113,8 +113,200 @@ const RU_RAW = [
   {w:"Юрист",t:"lawyer"},{w:"Я",t:"I"},
 ];
 
+const RU_L2_RAW = [
+  {w:"Адрес",t:"address"},{w:"Аквариум",t:"aquarium"},
+  {w:"Апельсиновый",t:"orange (adj., e.g. juice)"},{w:"Аптека",t:"pharmacy"},
+  {w:"Бедный",t:"poor"},{w:"Белый",t:"white"},
+  {w:"Бизнес-центр",t:"business centre"},{w:"Блин",t:"pancake"},
+  {w:"Богатый",t:"rich"},{w:"Борщ",t:"borsch (Russian soup)"},
+  {w:"Быстрый",t:"fast"},{w:"Быть",t:"to be"},
+  {w:"Вегетарианский",t:"vegetarian (adj.)"},{w:"Видеть",t:"to see"},
+  {w:"Виза",t:"visa"},{w:"Вино",t:"wine"},
+  {w:"Вкусно",t:"tasty (adverb)"},{w:"Вкусный",t:"tasty"},
+  {w:"Водка",t:"vodka"},{w:"Война",t:"war"},
+  {w:"Вот",t:"here is / there / well (coll.)"},{w:"Всегда",t:"always"},
+  {w:"Высокий",t:"tall, high"},
+  {w:"Глупый",t:"silly, dumb, stupid"},{w:"Горячий",t:"hot"},
+  {w:"Гостиница",t:"hotel"},{w:"Государство",t:"state"},
+  {w:"Грибной",t:"mushroom (adj.)"},{w:"Громкий",t:"loud"},
+  {w:"Гулять",t:"to walk"},{w:"ГУМ",t:"GUM (department store)"},
+  {w:"Далеко",t:"far (adverb)"},{w:"Деревня",t:"countryside, village"},
+  {w:"Дешёвый",t:"cheap"},{w:"Джаз",t:"jazz"},
+  {w:"Динамик",t:"speaker"},{w:"Диск",t:"disc, CD"},
+  {w:"Длинный",t:"long"},{w:"Должен",t:"should"},
+  {w:"Дорогой",t:"expensive / dear (m.)"},{w:"Дорогая",t:"expensive / dear (f.)"},
+  {w:"Думать",t:"to think"},
+  {w:"Еда",t:"food"},{w:"Если",t:"if"},{w:"Ещё",t:"more"},
+  {w:"Жить",t:"to live"},
+  {w:"Забывать",t:"to forget"},{w:"Завтракать",t:"to have breakfast"},
+  {w:"Заказ",t:"order"},{w:"Заказать",t:"to order"},
+  {w:"Занят",t:"to be busy"},{w:"Звонить",t:"to call"},
+  {w:"Звук",t:"sound"},{w:"Зоопарк",t:"zoo"},
+  {w:"Игра",t:"game"},{w:"Идиот",t:"idiot"},
+  {w:"Интеллект",t:"intelligence"},{w:"Интересный",t:"interesting"},
+  {w:"Итальянский",t:"Italian"},
+  {w:"Кабинет",t:"cabinet"},{w:"Какой",t:"what, which"},
+  {w:"Квартира",t:"flat"},{w:"Клавиатура",t:"keyboard"},
+  {w:"Коктейль",t:"cocktail"},{w:"Конкретно",t:"specifically"},
+  {w:"Конференция",t:"conference, meeting"},{w:"Короткий",t:"short"},
+  {w:"Костюм",t:"suit"},{w:"Кошка",t:"cat"},
+  {w:"Красивый",t:"beautiful"},{w:"Красный",t:"red"},
+  {w:"Кремль",t:"Kremlin"},{w:"Круто",t:"cool, super"},
+  {w:"Купить",t:"to buy"},{w:"Куриный",t:"chicken (adj.)"},
+  {w:"Курить",t:"to smoke"},{w:"Курьер",t:"delivery person"},
+  {w:"Лазанья",t:"lasagna"},{w:"Лёгкий",t:"light (weight)"},
+  {w:"Лес",t:"forest, woods"},{w:"Любить",t:"to love, to like"},
+  {w:"Маленький",t:"small, little"},{w:"Медленный",t:"slow"},
+  {w:"Мексиканский",t:"Mexican"},{w:"Меню",t:"menu"},
+  {w:"Минута",t:"minute"},{w:"Мир",t:"world"},
+  {w:"Можно",t:"(it is) allowed"},{w:"Морс",t:"fruit drink"},
+  {w:"Мясо",t:"meat"},
+  {w:"Не за что",t:"not at all, you're welcome"},
+  {w:"Невкусный",t:"not tasty"},{w:"Недалеко",t:"not far"},
+  {w:"Неделя",t:"week"},{w:"Некрасивый",t:"not beautiful"},
+  {w:"Неприятный",t:"not pleasant"},{w:"Неудобный",t:"not comfortable"},
+  {w:"Низкий",t:"low"},{w:"Никогда",t:"never"},
+  {w:"Ничего",t:"nothing"},{w:"Ноутбук",t:"laptop"},
+  {w:"Нравиться",t:"to like (e.g. мне нравится)"},
+  {w:"Овощ",t:"vegetable (n.)"},{w:"Овощной",t:"vegetable (adj.)"},
+  {w:"Огромный",t:"huge"},{w:"Одежда",t:"clothes, wear"},
+  {w:"Один",t:"one, alone"},{w:"Озеро",t:"lake"},
+  {w:"Отлично",t:"perfect, excellent"},
+  {w:"Память",t:"memory"},{w:"Панель",t:"panel"},
+  {w:"Паста",t:"pasta"},{w:"Пельмени",t:"dumplings"},
+  {w:"Первый",t:"first"},{w:"Пещера",t:"cave"},
+  {w:"Письмо",t:"letter"},{w:"Пицца",t:"pizza"},
+  {w:"Платить",t:"to pay"},{w:"Плохой",t:"bad"},
+  {w:"Поле",t:"field"},{w:"Поликлиника",t:"clinic"},
+  {w:"Полиция",t:"police"},{w:"Последний",t:"last"},
+  {w:"Потом",t:"then, after"},{w:"Правда",t:"truth"},
+  {w:"Правильно",t:"correct"},{w:"Прекрасный",t:"perfect"},
+  {w:"Приятный",t:"pleasant"},{w:"Пробка",t:"traffic jam"},
+  {w:"Продукт",t:"product"},{w:"Прохожий",t:"passer-by"},
+  {w:"Прямо",t:"straight forward"},
+  {w:"Раз",t:"one time, once"},{w:"Раньше",t:"earlier, before"},
+  {w:"Розовый",t:"pink"},{w:"Рубль",t:"rouble"},{w:"Рыба",t:"fish"},
+  {w:"Салат",t:"salad"},{w:"Самый",t:"the most"},
+  {w:"Светлый",t:"light (colour)"},{w:"Сим-карта",t:"SIM card"},
+  {w:"Слева",t:"on the left"},{w:"Служба",t:"work / church service"},
+  {w:"Сок",t:"juice"},{w:"Солнце",t:"sun"},
+  {w:"Спорить",t:"to argue"},{w:"Справа",t:"on the right"},
+  {w:"Спрашивать",t:"to ask"},{w:"Старый",t:"old"},
+  {w:"Стиль",t:"style"},{w:"Стильный",t:"stylish, trendy"},
+  {w:"Стоить",t:"to cost"},{w:"Суп",t:"soup"},
+  {w:"Тёмный",t:"dark"},{w:"Тёплый",t:"warm"},
+  {w:"Тигр",t:"tiger"},{w:"Тихий",t:"quiet"},{w:"Тяжёлый",t:"heavy"},
+  {w:"Удобный",t:"cosy, comfortable"},{w:"Ужасный",t:"awful"},
+  {w:"Уже",t:"already"},{w:"Ужинать",t:"to have dinner"},
+  {w:"Узкий",t:"tight, narrow"},{w:"Умный",t:"clever, intelligent"},
+  {w:"Устал",t:"tired"},
+  {w:"Форма",t:"form"},{w:"Французский",t:"French"},
+  {w:"Холодный",t:"cold"},{w:"Хотеть",t:"to want"},
+  {w:"Цена",t:"price"},{w:"Церковь",t:"church"},
+  {w:"Через",t:"through, in (+ time)"},{w:"Чёрный",t:"black"},
+  {w:"Чистый",t:"clean"},
+  {w:"Шапка",t:"hat"},{w:"Шарф",t:"scarf"},
+  {w:"Широкий",t:"wide"},{w:"Шуба",t:"fur-coat"},
+];
+
+// ── LESSON 3 (11–15) ──────────────────────────────────────────────────────
+const RU_L3_RAW = [
+  {w:"Бегать",t:"to run"},{w:"Без",t:"without"},{w:"Близнецы",t:"twins"},
+  {w:"Вариант",t:"variant"},{w:"Весна",t:"spring"},{w:"Выходные",t:"weekend"},
+  {w:"Гол",t:"goal"},{w:"Гости",t:"visitors"},
+  {w:"Даже",t:"even"},{w:"Дедлайн",t:"deadline"},
+  {w:"Жаль",t:"pity"},{w:"Жара",t:"heat"},{w:"Жаркий",t:"hot (climate)"},
+  {w:"Закончить",t:"to finish"},{w:"Замужем",t:"to be married (woman)"},
+  {w:"Зима",t:"winter"},{w:"Идеальный",t:"ideal (adj.)"},
+  {w:"Конституция",t:"Constitution"},{w:"Космонавтика",t:"cosmonautics"},
+  {w:"Краска",t:"paint (n.)"},{w:"Лето",t:"summer"},
+  {w:"Мочь",t:"to be able to, can"},{w:"Осень",t:"autumn"},
+  {w:"Отпуск",t:"vacation"},{w:"Отчёт",t:"report"},
+  {w:"Передай привет",t:"send one's best regards"},{w:"Пистолет",t:"hand gun"},
+  {w:"Планировать",t:"to plan"},{w:"Победа",t:"victory"},
+  {w:"Погода",t:"weather"},{w:"Подарок",t:"a gift"},
+  {w:"Позавчера",t:"the day before yesterday"},
+  {w:"Послезавтра",t:"the day after tomorrow"},
+  {w:"Престижно",t:"prestigious (adverb)"},{w:"Пряник",t:"gingerbread"},
+  {w:"Пунктуальный",t:"punctual"},{w:"Рождество",t:"Christmas"},
+  {w:"Самовар",t:"samovar"},{w:"Снег",t:"snow"},
+  {w:"Совесть",t:"conscience"},
+  {w:"Счёт",t:"bill / check / bank account"},
+  {w:"Труд",t:"labor"},{w:"Уволен",t:"fired, dismissed"},
+];
+
+// ── LESSON 4 (16–20) ──────────────────────────────────────────────────────
+const RU_L4_RAW = [
+  {w:"Аэробика",t:"aerobics"},{w:"Анатомия",t:"anatomy"},
+  {w:"Аудитор",t:"auditor"},{w:"Бадминтон",t:"badminton"},
+  {w:"Банан",t:"banana"},{w:"Банкрот",t:"bankrupt"},
+  {w:"Брокер",t:"broker"},{w:"Брать",t:"to take"},
+  {w:"Ведро",t:"bucket"},{w:"Встречать",t:"to meet, to greet"},
+  {w:"Гость",t:"guest"},{w:"Давать",t:"to give"},
+  {w:"Девочка",t:"girl (young)"},{w:"Дерево",t:"tree / wood"},
+  {w:"Есть",t:"to eat"},{w:"Женщина",t:"woman"},
+  {w:"Зал",t:"hall, room"},{w:"Звать",t:"to call, to invite"},
+  {w:"Идти",t:"to go (on foot)"},{w:"Красота",t:"beauty"},
+  {w:"Культура",t:"culture"},{w:"Кухня",t:"kitchen, cuisine"},
+  {w:"Лёд",t:"ice"},{w:"Мальчик",t:"boy"},
+  {w:"Маршрут",t:"route"},{w:"Мужчина",t:"man"},
+  {w:"Написать",t:"to write"},{w:"Небо",t:"sky"},
+  {w:"Нести",t:"to carry (on foot)"},{w:"Нога",t:"leg, foot"},
+  {w:"Носить",t:"to carry / to wear"},{w:"Общаться",t:"to communicate, socialize"},
+  {w:"Отдавать",t:"to give back"},{w:"Открытка",t:"postcard"},
+  {w:"Петь",t:"to sing"},{w:"Писать",t:"to write"},
+  {w:"Платье",t:"dress"},{w:"Подруга",t:"female friend"},
+  {w:"Политика",t:"politics"},{w:"Помогать",t:"to help"},
+  {w:"Принимать",t:"to accept, to take"},{w:"Продавать",t:"to sell"},
+  {w:"Руки",t:"hands, arms"},{w:"Рынок",t:"market"},
+  {w:"Свидание",t:"date (romantic)"},{w:"Сестра",t:"sister"},
+  {w:"Слово",t:"word"},{w:"Смеяться",t:"to laugh"},
+  {w:"Стоять",t:"to stand"},{w:"Улыбка",t:"smile"},
+  {w:"Уходить",t:"to leave, to go away"},
+  {w:"Цветок",t:"flower"},{w:"Шоколад",t:"chocolate"},
+  {w:"Юмор",t:"humor"},
+];
+
+// ── LESSON 5 (21–25) ──────────────────────────────────────────────────────
+const RU_L5_RAW = [
+  {w:"Авария",t:"accident, breakdown"},{w:"Автобус",t:"bus"},
+  {w:"Бассейн",t:"swimming pool"},{w:"Бесплатно",t:"free of charge"},
+  {w:"Болезнь",t:"illness, disease"},{w:"Больница",t:"hospital"},
+  {w:"Больной",t:"sick, ill"},{w:"Вагон",t:"railway carriage"},
+  {w:"Велосипед",t:"bicycle"},{w:"Вернуться",t:"to return, to come back"},
+  {w:"Вещи",t:"things, belongings"},
+  {w:"Врач",t:"doctor"},{w:"Выздороветь",t:"to recover, get better"},
+  {w:"Голова",t:"head"},{w:"Горло",t:"throat"},
+  {w:"Горячее",t:"hot dish, main course"},{w:"Гулять",t:"to walk, to stroll"},
+  {w:"Дёшево",t:"cheap (adverb)"},{w:"Дорого",t:"expensive (adverb)"},
+  {w:"Дорога",t:"road, way"},{w:"Завтра",t:"tomorrow"},
+  {w:"Закрыт",t:"closed"},{w:"Записаться",t:"to make an appointment"},
+  {w:"Касса",t:"cash desk, ticket office"},{w:"Кашель",t:"cough"},
+  {w:"Лекарство",t:"medicine, drug"},{w:"Лучше",t:"better"},
+  {w:"Маршрутка",t:"minibus taxi"},{w:"Насморк",t:"runny nose"},
+  {w:"Ноябрь",t:"November"},{w:"Обед",t:"lunch"},
+  {w:"Открыт",t:"open"},{w:"Отправление",t:"departure"},
+  {w:"Остановка",t:"bus/tram stop"},{w:"Пересадка",t:"transfer, connection"},
+  {w:"Перрон",t:"railway platform"},{w:"Поезд",t:"train"},
+  {w:"Покупка",t:"purchase, shopping"},{w:"Прибытие",t:"arrival"},
+  {w:"Простуда",t:"cold (illness)"},{w:"Расписание",t:"schedule, timetable"},
+  {w:"Рецепт",t:"prescription, recipe"},{w:"Самолёт",t:"airplane"},
+  {w:"Скорая помощь",t:"ambulance"},
+  {w:"Сколько стоит",t:"how much does it cost"},
+  {w:"Такси",t:"taxi"},{w:"Таблетка",t:"tablet, pill"},
+  {w:"Температура",t:"temperature, fever"},{w:"Трамвай",t:"tram"},
+  {w:"Троллейбус",t:"trolleybus"},
+  {w:"Удобно",t:"comfortable, convenient"},
+  {w:"Ужин",t:"dinner (evening meal)"},
+  {w:"Чек",t:"receipt, check"},
+];
+
 const RU_LIBRARY = {
-  "L1": RU_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L1", lang: "ru" }))
+  "L1": RU_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L1", lang: "ru" })),
+  "L2": RU_L2_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L2", lang: "ru" })),
+  "L3": RU_L3_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L3", lang: "ru" })),
+  "L4": RU_L4_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L4", lang: "ru" })),
+  "L5": RU_L5_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L5", lang: "ru" })),
 };
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
@@ -387,7 +579,7 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{ fontSize: 48, marginBottom: 8 }}>&#127891;</div>
               <h1 style={{ fontSize: 28, fontWeight: "bold", margin: "0 0 6px", color: "#ffd95a" }}>Merhaba, {user.username}!</h1>
-              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} İng + {RU_RAW.length} Rus kelime</p>
+              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} İng + {Object.values(RU_LIBRARY).flat().length} Rus kelime</p>
             </div>
 
             {/* Dil Seçici */}
@@ -422,10 +614,18 @@ export default function App() {
                   ))}
                 </div>
               ) : (
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => setRuLevel("L1")} style={{ ...S.btn(true), flex: 1, padding: "12px 0", fontSize: 14 }}>
-                    Ders 1–5<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{RU_RAW.length}</div>
-                  </button>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {[
+                    ["L1","1–5", RU_RAW.length],
+                    ["L2","6–10", RU_L2_RAW.length],
+                    ["L3","11–15", RU_L3_RAW.length],
+                    ["L4","16–20", RU_L4_RAW.length],
+                    ["L5","21–25", RU_L5_RAW.length],
+                  ].map(([l, label, count]) => (
+                    <button key={l} onClick={() => setRuLevel(l)} style={{ ...S.btn(ruLevel === l), flex: 1, minWidth: 60, padding: "10px 0", fontSize: 12 }}>
+                      {label}<div style={{ fontSize: 9, opacity: 0.6, marginTop: 2 }}>{count}</div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -573,8 +773,18 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div style={{ marginBottom: 14, padding: "8px 14px", background: "rgba(255,217,90,0.07)", border: "1px solid rgba(255,217,90,0.2)", borderRadius: 10, fontSize: 13, color: "rgba(232,228,217,0.6)" }}>
-                🇷🇺 Rusça — Dersler 1–5 ({RU_RAW.length} kelime)
+              <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+                {[
+                  ["L1","1–5", RU_RAW.length],
+                  ["L2","6–10", RU_L2_RAW.length],
+                  ["L3","11–15", RU_L3_RAW.length],
+                  ["L4","16–20", RU_L4_RAW.length],
+                  ["L5","21–25", RU_L5_RAW.length],
+                ].map(([l, label, count]) => (
+                  <button key={l} onClick={() => setRuLevel(l)} style={{ ...S.btn(ruLevel === l), flex: 1, minWidth: 55 }}>
+                    {label}<div style={{ fontSize: 9, opacity: 0.6 }}>{count}</div>
+                  </button>
+                ))}
               </div>
             )}
             <input value={libSearch} onChange={e => setLibSearch(e.target.value)} placeholder={lang === "ru" ? "Rusça veya İngilizce ara..." : "Kelime veya Türkçe ara..."} style={{ ...S.inp, marginBottom: 14 }} />
