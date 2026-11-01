@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
+import GermanCourse from "./GermanCourse";
+import { DE_LIBRARY, DE_MODULES } from "./german";
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -337,9 +339,10 @@ export default function App() {
   const [authErr, setAuthErr] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [screen, setScreen] = useState("home");
-  const [lang, setLang] = useState("en"); // "en" | "ru"
+  const [lang, setLang] = useState("en"); // "en" | "ru" | "de"
   const [level, setLevel] = useState("A1");
   const [ruLevel, setRuLevel] = useState("L1");
+  const [deLevel, setDeLevel] = useState("M1");
   const [prog, setProg] = useState(emptyProgress());
   const [deck, setDeck] = useState([]);
   const [cardIdx, setCardIdx] = useState(0);
@@ -422,8 +425,9 @@ export default function App() {
 
   const currentLibrary = useCallback(() => {
     if (lang === "ru") return RU_LIBRARY[ruLevel] || [];
+    if (lang === "de") return DE_LIBRARY[deLevel] || [];
     return LIBRARY[level] || [];
-  }, [lang, level, ruLevel]);
+  }, [lang, level, ruLevel, deLevel]);
 
   const startCards = useCallback(() => {
     setDeck(shuffle(currentLibrary()).slice(0, 15));
@@ -442,14 +446,16 @@ export default function App() {
 
   const startQuiz = useCallback(() => {
     setScreen("quiz"); setSessionScore({ c: 0, t: 0 }); nextQuiz();
-  }, [lang, level, ruLevel]);
+  }, [lang, level, ruLevel, deLevel]);
 
   const nextQuiz = useCallback(() => {
-    const all = lang === "ru" ? (RU_LIBRARY[ruLevel] || []) : (LIBRARY[level] || []);
+    const all = lang === "ru" ? (RU_LIBRARY[ruLevel] || [])
+      : lang === "de" ? (DE_LIBRARY[deLevel] || [])
+      : (LIBRARY[level] || []);
     const w = all[Math.floor(Math.random() * all.length)];
     setQuiz(makeQuiz(w.word, w.turkish, all));
     setSel(null); setCorrect(null);
-  }, [lang, level, ruLevel]);
+  }, [lang, level, ruLevel, deLevel]);
 
   const submitQuiz = useCallback(async (idx) => {
     if (sel !== null || !quiz) return;
@@ -467,7 +473,8 @@ export default function App() {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(word);
-    utt.lang = (wordLang || lang) === "ru" ? "ru-RU" : "en-US";
+    const l = wordLang || lang;
+    utt.lang = l === "ru" ? "ru-RU" : l === "de" ? "de-DE" : "en-US";
     utt.rate = 0.9;
     window.speechSynthesis.speak(utt);
   }, [lang]);
@@ -496,16 +503,21 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (screen === "flashcard" && flipped && deck[cardIdx]) {
+    if (screen === "flashcard" && flipped && deck[cardIdx] && lang !== "de") {
       fetchExample(deck[cardIdx].word);
     }
   }, [screen, flipped, cardIdx]);
 
 
-  const learned = Object.keys(prog.learned).length;
+  // "__" ile başlayan anahtarlar ders tamamlanma kayıtlarıdır, kelime sayısına dahil değil
+  const learned = Object.keys(prog.learned).filter(k => !k.startsWith("__")).length;
   const acc = prog.qTotal > 0 ? Math.round((prog.qCorrect / prog.qTotal) * 100) : 0;
   const libWords = lang === "ru"
     ? (RU_LIBRARY[ruLevel] || []).filter(w =>
+        !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
+        w.turkish.toLowerCase().includes(libSearch.toLowerCase()))
+    : lang === "de"
+    ? (DE_LIBRARY[deLevel] || []).filter(w =>
         !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
         w.turkish.toLowerCase().includes(libSearch.toLowerCase()))
     : (LIBRARY[libLevel] || []).filter(w =>
@@ -579,12 +591,12 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{ fontSize: 48, marginBottom: 8 }}>&#127891;</div>
               <h1 style={{ fontSize: 28, fontWeight: "bold", margin: "0 0 6px", color: "#ffd95a" }}>Merhaba, {user.username}!</h1>
-              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} İng + {Object.values(RU_LIBRARY).flat().length} Rus kelime</p>
+              <p style={{ color: "rgba(232,228,217,0.4)", margin: 0, fontSize: 13 }}>{Object.values(LIBRARY).flat().length} İng + {Object.values(RU_LIBRARY).flat().length} Rus + {Object.values(DE_LIBRARY).flat().length} Alm kelime</p>
             </div>
 
             {/* Dil Seçici */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 5 }}>
-              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"]].map(([l, label]) => (
+              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"],["de","🇩🇪 Almanca"]].map(([l, label]) => (
                 <button key={l} onClick={() => setLang(l)} style={{
                   flex: 1, background: lang === l ? "#ffd95a" : "transparent",
                   border: "none", borderRadius: 8, color: lang === l ? "#0a0a0f" : "rgba(232,228,217,0.5)",
@@ -613,6 +625,14 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+              ) : lang === "de" ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {DE_MODULES.map((m, i) => (
+                    <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1, padding: "12px 0", fontSize: 13 }}>
+                      Modül {i + 1}<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {[
@@ -629,8 +649,15 @@ export default function App() {
                 </div>
               )}
             </div>
+            {lang === "de" && (
+              <button onClick={() => nav("german")} style={{ width: "100%", background: "linear-gradient(135deg,#34d399,#059669)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "20px 16px", fontSize: 16, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center", marginBottom: 12 }}>
+                <div style={{ fontSize: 26, marginBottom: 4 }}>&#127891;</div>
+                Almanca A1 Dersleri
+                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, fontWeight: "normal" }}>{DE_MODULES.reduce((n, m) => n + m.lessons.length, 0)} ders - gramer, örnekler, alıştırmalar</div>
+              </button>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <button onClick={startCards} style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
+              <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#128218;</div>
                 Flashcard
                 <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{level} - 15 kart</div>
@@ -641,6 +668,13 @@ export default function App() {
                 <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>Sonsuz soru</div>
               </button>
             </div>
+          </div>
+        )}
+
+        {screen === "german" && (
+          <div>
+            <button onClick={() => nav("home")} style={{ ...S.btn(false), marginBottom: 14 }}>Ana sayfa</button>
+            <GermanCourse prog={prog} saveProg={saveProg} speak={speak} />
           </div>
         )}
 
@@ -669,7 +703,7 @@ export default function App() {
                 <div onClick={() => setFlipped(f => !f)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "52px 32px", minHeight: 260, textAlign: "center", cursor: "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {!flipped ? (
                     <div>
-                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{lang === "ru" ? "🇷🇺 Rusça" : (level + " - İngilizce")}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{lang === "ru" ? "🇷🇺 Rusça" : lang === "de" ? "🇩🇪 Almanca" : (level + " - İngilizce")}</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
                         <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
                         <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word, lang); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
@@ -755,7 +789,7 @@ export default function App() {
             <p style={{ color: "rgba(232,228,217,0.35)", fontSize: 13, marginBottom: 14 }}>{Object.values(LIBRARY).flat().length} İng + {RU_RAW.length} Rus kelime</p>
             {/* Dil seçici */}
             <div style={{ display: "flex", gap: 8, marginBottom: 14, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 4 }}>
-              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"]].map(([l, label]) => (
+              {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"],["de","🇩🇪 Almanca"]].map(([l, label]) => (
                 <button key={l} onClick={() => setLang(l)} style={{
                   flex: 1, background: lang === l ? "#ffd95a" : "transparent",
                   border: "none", borderRadius: 7, color: lang === l ? "#0a0a0f" : "rgba(232,228,217,0.5)",
@@ -769,6 +803,14 @@ export default function App() {
                 {LEVELS.map(l => (
                   <button key={l} onClick={() => setLibLevel(l)} style={{ ...S.btn(libLevel === l), flex: 1 }}>
                     {l}<div style={{ fontSize: 10, opacity: 0.6 }}>{(LIBRARY[l]||[]).length}</div>
+                  </button>
+                ))}
+              </div>
+            ) : lang === "de" ? (
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {DE_MODULES.map((m, i) => (
+                  <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1 }}>
+                    Modül {i + 1}<div style={{ fontSize: 10, opacity: 0.6 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
                   </button>
                 ))}
               </div>
