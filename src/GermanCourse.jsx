@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DE_MODULES, displayWord, wordKey, buildPractice } from "./german";
+import { shuffle } from "./srs";
 
 const GOLD = "#ffd95a";
 const dim = "rgba(232,228,217,0.45)";
@@ -12,7 +13,6 @@ const btn = (active) => ({
 const ARTICLE_COLOR = { der: "#60a5fa", die: "#f87171", das: "#34d399" };
 
 const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
-const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 // Ders kodlarından tamamlanma kaydı: prog.learned["__de_lesson_<id>"] = en iyi yüzde
 export const lessonKey = (id) => "__de_lesson_" + id;
