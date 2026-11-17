@@ -3,6 +3,8 @@
 //
 // Kelime alanları: art (der/die/das), de (kelime), pl (çoğul), fem (dişil meslek biçimi), tr (Türkçe)
 
+import { shuffle } from "./srs";
+
 const w = (art, de, tr, pl, fem) => ({ art, de, tr, pl: pl || null, fem: fem || null });
 const v = (de, tr) => ({ art: null, de, tr, pl: null, fem: null });
 
@@ -1025,8 +1027,6 @@ export const DE_LIBRARY = Object.fromEntries(
     ),
   ])
 );
-
-const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 // Bir ders için pratik soruları: elle yazılanlar + kelimelerden otomatik üretilenler
 export function buildPractice(lesson, count = 12) {

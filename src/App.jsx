@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import GermanCourse from "./GermanCourse";
 import { DE_LIBRARY, DE_MODULES } from "./german";
+import {
+  shuffle, cardKey, rateCard, demoteCard, buildDeck, deckStats, pickQuizCard, prepareProgress,
+} from "./srs";
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -12,7 +15,7 @@ const RAW = {"A1":[{"w":"about","t":"hakkinda, yaklasik","e":"She uses the word 
 
 const LIBRARY = {};
 for (const [lvl, words] of Object.entries(RAW)) {
-  LIBRARY[lvl] = words.map(w => ({ word: w.w, turkish: w.t, example: w.e, level: lvl }));
+  LIBRARY[lvl] = words.map(w => ({ word: w.w, turkish: w.t, example: w.e, level: lvl, lang: "en" }));
 }
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -311,15 +314,21 @@ const RU_LIBRARY = {
   "L5": RU_L5_RAW.map(w => ({ word: w.w, turkish: w.t, example: "", level: "L5", lang: "ru" })),
 };
 
-function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
-
+// Yanlış şıklar: aynı anlamı tekrar etmeyen, doğru cevaba uzunluk olarak yakın olanlar
+// (çok farklı uzunluktaki şık doğru cevabı kendiliğinden ele verir)
 function makeQuiz(word, turkish, allWords) {
-  const wrong = allWords
-    .filter(w => w.word !== word && w.turkish !== turkish)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
-    .map(w => w.turkish);
-  const opts = [...wrong, turkish].sort(() => Math.random() - 0.5);
+  const seen = new Set([turkish]);
+  const candidates = [];
+  for (const w of shuffle(allWords)) {
+    if (w.word === word || seen.has(w.turkish)) continue;
+    seen.add(w.turkish);
+    candidates.push(w.turkish);
+    if (candidates.length >= 12) break;
+  }
+  const wrong = candidates
+    .sort((a, b) => Math.abs(a.length - turkish.length) - Math.abs(b.length - turkish.length))
+    .slice(0, 3);
+  const opts = shuffle([...wrong, turkish]);
   return { word, opts, correct: opts.indexOf(turkish) };
 }
 
@@ -331,6 +340,9 @@ async function hashPw(pw) {
 }
 
 const emptyProgress = () => ({ learned: {}, qCorrect: 0, qTotal: 0 });
+
+const ALL_LIBS = { en: LIBRARY, ru: RU_LIBRARY, de: DE_LIBRARY };
+const ALL_CARDS = Object.values(ALL_LIBS).flatMap(lib => Object.values(lib).flat());
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -366,24 +378,62 @@ export default function App() {
     }
   }, []);
 
-  const loadProg = async (uid) => {
-    try {
-      const { data } = await supabase.from("progress").select().eq("user_id", uid).single();
-      if (data) setProg({ learned: data.learned || {}, qCorrect: data.quiz_correct || 0, qTotal: data.quiz_total || 0 });
-    } catch {}
-  };
+  // Her kart/quiz cevabında ağ isteği atmamak için kayıtlar 700 ms birleştirilir.
+  // Güncel ilerleme progRef'te durur; böylece art arda hızlı cevaplarda eski state okunmaz.
+  const progRef = useRef(emptyProgress());
+  const saveTimer = useRef(null);
 
-  const saveProg = useCallback(async (p) => {
-    setProg(p);
-    if (!user) return;
+  const pushProg = useCallback(async (p, uid) => {
     try {
       await supabase.from("progress").upsert({
-        user_id: user.id, learned: p.learned,
+        user_id: uid, learned: p.learned,
         quiz_correct: p.qCorrect, quiz_total: p.qTotal,
         updated_at: new Date().toISOString()
       }, { onConflict: "user_id" });
     } catch {}
-  }, [user]);
+  }, []);
+
+  const loadProg = async (uid) => {
+    try {
+      const { data } = await supabase.from("progress").select().eq("user_id", uid).single();
+      if (data) {
+        // Eski düz anahtarları dil:seviye:kelime biçimine taşı ve SRS kaydı olmayan öğrenilmişlere vade ver
+        const { learned, changed } = prepareProgress(data.learned || {}, ALL_LIBS);
+        const p = { learned, qCorrect: data.quiz_correct || 0, qTotal: data.quiz_total || 0 };
+        progRef.current = p;
+        setProg(p);
+        if (changed) await pushProg(p, uid);
+      }
+    } catch {}
+  };
+
+  const saveProg = useCallback((p) => {
+    progRef.current = p;
+    setProg(p);
+    if (!user) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      pushProg(progRef.current, user.id);
+    }, 700);
+  }, [user, pushProg]);
+
+  const flushProg = useCallback(() => {
+    if (!user || !saveTimer.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    pushProg(progRef.current, user.id);
+  }, [user, pushProg]);
+
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") flushProg(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", flushProg);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", flushProg);
+    };
+  }, [flushProg]);
 
   const doLogin = async () => {
     setAuthErr(""); setAuthBusy(true);
@@ -418,6 +468,8 @@ export default function App() {
   };
 
   const logout = () => {
+    flushProg();
+    progRef.current = emptyProgress();
     setUser(null); setProg(emptyProgress());
     localStorage.removeItem("lingua_u"); setScreen("home");
     setForm({ username: "", password: "" });
@@ -430,19 +482,17 @@ export default function App() {
   }, [lang, level, ruLevel, deLevel]);
 
   const startCards = useCallback(() => {
-    setDeck(shuffle(currentLibrary()).slice(0, 15));
+    // Önce tekrarı gelen kartlar, kalan yere yeni kelimeler (aralıklı tekrar)
+    setDeck(buildDeck(currentLibrary(), progRef.current).cards);
     setCardIdx(0); setFlipped(false); setDone(false); setScreen("flashcard");
   }, [currentLibrary]);
 
-  const nextCard = useCallback(async (rating) => {
+  const nextCard = useCallback((rating) => {
     const card = deck[cardIdx];
-    if (rating === "learned" && !prog.learned[card.word]) {
-      const np = { ...prog, learned: { ...prog.learned, [card.word]: true } };
-      await saveProg(np);
-    }
-    if (cardIdx + 1 >= deck.length) setDone(true);
+    saveProg(rateCard(progRef.current, card, rating));
+    if (cardIdx + 1 >= deck.length) { setDone(true); flushProg(); }
     else { setCardIdx(i => i + 1); setFlipped(false); }
-  }, [cardIdx, deck, prog, saveProg]);
+  }, [cardIdx, deck, saveProg, flushProg]);
 
   const startQuiz = useCallback(() => {
     setScreen("quiz"); setSessionScore({ c: 0, t: 0 }); nextQuiz();
@@ -452,20 +502,22 @@ export default function App() {
     const all = lang === "ru" ? (RU_LIBRARY[ruLevel] || [])
       : lang === "de" ? (DE_LIBRARY[deLevel] || [])
       : (LIBRARY[level] || []);
-    const w = all[Math.floor(Math.random() * all.length)];
-    setQuiz(makeQuiz(w.word, w.turkish, all));
+    const w = pickQuizCard(all, progRef.current);
+    setQuiz({ ...makeQuiz(w.word, w.turkish, all), card: w });
     setSel(null); setCorrect(null);
   }, [lang, level, ruLevel, deLevel]);
 
-  const submitQuiz = useCallback(async (idx) => {
+  const submitQuiz = useCallback((idx) => {
     if (sel !== null || !quiz) return;
     setSel(idx);
     const ok = idx === quiz.correct;
     setCorrect(ok);
     setSessionScore(s => ({ c: s.c + (ok ? 1 : 0), t: s.t + 1 }));
-    const np = { ...prog, qCorrect: prog.qCorrect + (ok ? 1 : 0), qTotal: prog.qTotal + 1 };
-    await saveProg(np);
-  }, [sel, quiz, prog, saveProg]);
+    const cur = progRef.current;
+    let np = { ...cur, qCorrect: cur.qCorrect + (ok ? 1 : 0), qTotal: cur.qTotal + 1 };
+    if (!ok && quiz.card) np = demoteCard(np, quiz.card); // yanlış bilinen kelime tekrar listesine döner
+    saveProg(np);
+  }, [sel, quiz, saveProg]);
 
   const nav = (s) => { setScreen(s); setFlipped(false); };
 
@@ -512,6 +564,11 @@ export default function App() {
   // "__" ile başlayan anahtarlar ders tamamlanma kayıtlarıdır, kelime sayısına dahil değil
   const learned = Object.keys(prog.learned).filter(k => !k.startsWith("__")).length;
   const acc = prog.qTotal > 0 ? Math.round((prog.qCorrect / prog.qTotal) * 100) : 0;
+  // Seçili seviye için tekrarı gelen / yeni kelime sayısı (ana sayfadaki Flashcard butonu)
+  const curLevelLabel = lang === "ru" ? ruLevel : lang === "de" ? deLevel : level;
+  const dk = screen === "home" ? deckStats(currentLibrary(), prog) : { due: 0, fresh: 0 };
+  // Tüm dillerde bugün tekrarı gelen kelime sayısı (İlerleme ekranı)
+  const totalDue = screen === "stats" ? deckStats(ALL_CARDS, prog).due : 0;
   const libWords = lang === "ru"
     ? (RU_LIBRARY[ruLevel] || []).filter(w =>
         !libSearch || w.word.toLowerCase().includes(libSearch.toLowerCase()) ||
@@ -660,7 +717,7 @@ export default function App() {
               <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#128218;</div>
                 Flashcard
-                <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{level} - 15 kart</div>
+                <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{curLevelLabel} - {dk.due + dk.fresh > 0 ? dk.due + " tekrar, " + dk.fresh + " yeni" : "erken tekrar"}</div>
               </button>
               <button onClick={startQuiz} style={{ background: "linear-gradient(135deg,#60a5fa,#2563eb)", border: "none", borderRadius: 16, color: "#fff", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#129504;</div>
@@ -833,13 +890,13 @@ export default function App() {
             <div style={{ fontSize: 11, color: "rgba(232,228,217,0.25)", marginBottom: 10 }}>{libWords.length} kelime</div>
             <div style={{ display: "grid", gap: 5, maxHeight: "60vh", overflowY: "auto" }}>
               {libWords.slice(0, 200).map((w, i) => (
-                <div key={i} style={{ background: prog.learned[w.word] ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (prog.learned[w.word] ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={i} style={{ background: prog.learned[cardKey(w)] ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (prog.learned[cardKey(w)] ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <button onClick={() => speak(w.word, lang)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 14, padding: "0 6px 0 0", verticalAlign: "middle" }} title="Telaffuzu dinle">🔊</button>
-                    <span style={{ fontWeight: "bold", color: prog.learned[w.word] ? "#34d399" : "#e8e4d9", marginRight: 10, fontSize: 14 }}>{w.word}</span>
+                    <span style={{ fontWeight: "bold", color: prog.learned[cardKey(w)] ? "#34d399" : "#e8e4d9", marginRight: 10, fontSize: 14 }}>{w.word}</span>
                     <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{w.turkish}</span>
                   </div>
-                  {prog.learned[w.word] && <span style={{ fontSize: 14 }}>ok</span>}
+                  {prog.learned[cardKey(w)] && <span style={{ fontSize: 14 }}>ok</span>}
                 </div>
               ))}
               {libWords.length > 200 && <div style={{ textAlign: "center", padding: 14, color: "rgba(232,228,217,0.25)", fontSize: 12 }}>+{libWords.length - 200} kelime daha</div>}
@@ -851,7 +908,7 @@ export default function App() {
           <div>
             <h2 style={{ margin: "0 0 22px", fontSize: 20, color: "#ffd95a" }}>{user.username} - Ilerleme</h2>
             <div style={{ display: "grid", gap: 12 }}>
-              {[["&#11088;","Ogrenilen Kelime", learned,"#ffd95a"],["&#127919;","Dogruluk", acc + "%","#60a5fa"],["&#129504;","Toplam Quiz", prog.qTotal,"#a78bfa"],["Dogru","Dogru Cevap", prog.qCorrect,"#34d399"]].map(([icon, label, val, color]) => (
+              {[["&#11088;","Ogrenilen Kelime", learned,"#ffd95a"],["&#127919;","Dogruluk", acc + "%","#60a5fa"],["&#129504;","Toplam Quiz", prog.qTotal,"#a78bfa"],["Dogru","Dogru Cevap", prog.qCorrect,"#34d399"],["&#128260;","Bugun Tekrar Bekleyen", totalDue,"#f59e0b"]].map(([icon, label, val, color]) => (
                 <div key={label} style={{ ...S.card, display: "flex", alignItems: "center", gap: 18 }}>
                   <div style={{ fontSize: 30 }} dangerouslySetInnerHTML={{ __html: icon }} />
                   <div>
@@ -873,7 +930,7 @@ export default function App() {
               )}
               {LEVELS.map(l => {
                 const ws = LIBRARY[l] || [];
-                const lc = ws.filter(w => prog.learned[w.word]).length;
+                const lc = ws.filter(w => prog.learned[cardKey(w)]).length;
                 const pct = ws.length > 0 ? Math.round(lc / ws.length * 100) : 0;
                 return (
                   <div key={l} style={S.card}>
