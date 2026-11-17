@@ -98,3 +98,20 @@ npm install
 npm start
 # → http://localhost:3000
 ```
+
+---
+
+## 📚 Kelime verisi
+
+Kelime listeleri `App.jsx` içinde değil, ayrı dosyalarda durur ve dil seçilince yüklenir:
+
+| Dosya | İçerik |
+|---|---|
+| `src/data/en.json` | İngilizce, seviyelere göre: `{"A1": [{"w": "about", "t": "hakkinda", "e": "örnek cümle"}]}` |
+| `src/data/ru.json` | Rusça, seviyelere göre: `{"L1": [{"w": "Дом", "t": "house"}]}` |
+| `src/data/meta.json` | Seviye başına kelime sayıları (liste yüklenmeden gösterilir) |
+| `src/german.js` | Almanca müfredat (ders + kelime), henüz JSON'a taşınmadı |
+| `src/libraries.js` | Dinamik yükleme (`loadLibrary`) ve kart biçimine çevirme |
+| `src/srs.js` | Aralıklı tekrar (Leitner) ve ilerleme anahtarları |
+
+Kelime eklediysen `meta.json` sayılarını da güncelle; `npm test` ikisinin tutarlı olduğunu kontrol eder.
