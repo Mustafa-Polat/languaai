@@ -6,6 +6,7 @@ import {
   shuffle, cardKey, rateCard, demoteCard, buildDeck, deckStats, pickQuizCard, prepareProgress, MIGRATED_KEY,
 } from "./srs";
 import { loadLibrary, allCards, levelCount, totalCount } from "./libraries";
+import { signIn, signUp, toAppUser } from "./auth";
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -32,13 +33,6 @@ function makeQuiz(word, turkish, allWords) {
   return { word, opts, correct: opts.indexOf(turkish) };
 }
 
-async function hashPw(pw) {
-  const buf = await crypto.subtle.digest("SHA-256",
-    new TextEncoder().encode(pw + "lingua2025"));
-  return Array.from(new Uint8Array(buf))
-    .map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
 const emptyProgress = () => ({ learned: {}, qCorrect: 0, qTotal: 0 });
 
 
@@ -49,6 +43,9 @@ export default function App() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [authErr, setAuthErr] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
+  const [authReady, setAuthReady] = useState(false); // oturum kontrolü bitmeden giriş ekranı çakılmasın
+  const [saveErr, setSaveErr] = useState(false);
+  const [loadErr, setLoadErr] = useState(false);
   const [screen, setScreen] = useState("home");
   const [lang, setLang] = useState("en"); // "en" | "ru" | "de"
   const [level, setLevel] = useState("A1");
@@ -68,14 +65,36 @@ export default function App() {
   const [exampleSentence, setExampleSentence] = useState(null);
   const [exampleLoading, setExampleLoading] = useState(false);
 
+  // Oturum Supabase Auth'tan gelir (imzalı JWT). Eski sürümün düz "lingua_u" kaydı artık güvenilmez, silinir.
   useEffect(() => {
-    const saved = localStorage.getItem("lingua_u");
-    if (saved) {
-      const u = JSON.parse(saved);
-      setUser(u);
-      loadProg(u.id);
-    }
+    try { localStorage.removeItem("lingua_u"); } catch {}
+    let alive = true;
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (!alive) return;
+        setUser(toAppUser(data && data.session && data.session.user));
+        setAuthReady(true);
+      })
+      .catch(() => { if (alive) setAuthReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      const u = toAppUser(session && session.user);
+      setUser(prev => (prev && u && prev.id === u.id ? prev : u)); // sekme odağında gelen tekrar olaylarını yok say
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);
+
+  // Kullanıcı değişince (giriş / başka sekmede çıkış) ilerleme yüklenir ya da temizlenir
+  useEffect(() => {
+    currentUid.current = user ? user.id : null;
+    if (user) {
+      loadProg(user.id);
+    } else {
+      loadedUid.current = null;
+      progRef.current = emptyProgress();
+      setProg(emptyProgress());
+      setSaveErr(false); setLoadErr(false);
+    }
+  }, [user && user.id]);
 
   // Kelime listeleri dil bazında ihtiyaç olunca yüklenir (bkz. libraries.js)
   const [libs, setLibs] = useState({ de: DE_LIBRARY });
@@ -100,20 +119,32 @@ export default function App() {
   // Güncel ilerleme progRef'te durur; böylece art arda hızlı cevaplarda eski state okunmaz.
   const progRef = useRef(emptyProgress());
   const saveTimer = useRef(null);
+  const currentUid = useRef(null);  // şu an oturum açmış kullanıcı
+  const loadedUid = useRef(null);   // ilerlemesi sunucudan başarıyla okunmuş kullanıcı
 
   const pushProg = useCallback(async (p, uid) => {
     try {
-      await supabase.from("progress").upsert({
+      const { error } = await supabase.from("user_progress").upsert({
         user_id: uid, learned: p.learned,
         quiz_correct: p.qCorrect, quiz_total: p.qTotal,
         updated_at: new Date().toISOString()
       }, { onConflict: "user_id" });
-    } catch {}
+      if (error) throw error;
+      setSaveErr(false);
+      return true;
+    } catch {
+      setSaveErr(true);
+      return false;
+    }
   }, []);
 
   const loadProg = async (uid) => {
     try {
-      const { data } = await supabase.from("progress").select().eq("user_id", uid).single();
+      const { data, error } = await supabase.from("user_progress").select().eq("user_id", uid).maybeSingle();
+      if (error) throw error;
+      if (currentUid.current !== uid) return; // yükleme sürerken kullanıcı değişti / çıkış yaptı
+      loadedUid.current = uid;
+      setLoadErr(false);
       if (data) {
         let learned = data.learned || {};
         let changed = false;
@@ -131,7 +162,9 @@ export default function App() {
         setProg(p);
         if (changed) await pushProg(p, uid);
       }
-    } catch {}
+    } catch {
+      if (currentUid.current === uid) setLoadErr(true);
+    }
   };
 
   const saveProg = useCallback((p) => {
@@ -141,15 +174,17 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       saveTimer.current = null;
-      pushProg(progRef.current, user.id);
+      if (loadedUid.current === user.id) pushProg(progRef.current, user.id);
     }, 700);
   }, [user, pushProg]);
 
+  // Bekleyen kaydı hemen gönderir; tamamlanınca çözülen söz döndürür
   const flushProg = useCallback(() => {
-    if (!user || !saveTimer.current) return;
+    if (!user || !saveTimer.current) return Promise.resolve();
     clearTimeout(saveTimer.current);
     saveTimer.current = null;
-    pushProg(progRef.current, user.id);
+    if (loadedUid.current !== user.id) return Promise.resolve();
+    return pushProg(progRef.current, user.id);
   }, [user, pushProg]);
 
   useEffect(() => {
@@ -164,41 +199,24 @@ export default function App() {
 
   const doLogin = async () => {
     setAuthErr(""); setAuthBusy(true);
-    try {
-      const hash = await hashPw(form.password);
-      const { data, error } = await supabase.from("users")
-        .select().eq("username", form.username.toLowerCase()).eq("password_hash", hash).single();
-      if (error || !data) { setAuthErr("Kullanici adi veya sifre yanlis."); setAuthBusy(false); return; }
-      const u = { id: data.id, username: data.username };
-      setUser(u); localStorage.setItem("lingua_u", JSON.stringify(u));
-      await loadProg(data.id);
-    } catch (e) { setAuthErr("Giris basarisiz."); }
+    const r = await signIn(supabase, form.username, form.password);
+    if (r.error) setAuthErr(r.error);
+    else { setUser(r.user); setForm(f => ({ ...f, password: "" })); }
     setAuthBusy(false);
   };
 
   const doRegister = async () => {
     setAuthErr(""); setAuthBusy(true);
-    if (form.username.length < 3) { setAuthErr("Kullanici adi en az 3 karakter."); setAuthBusy(false); return; }
-    if (form.password.length < 4) { setAuthErr("Sifre en az 4 karakter."); setAuthBusy(false); return; }
-    try {
-      const { data: ex } = await supabase.from("users").select("id")
-        .eq("username", form.username.toLowerCase()).single();
-      if (ex) { setAuthErr("Bu kullanici adi alinmis."); setAuthBusy(false); return; }
-      const hash = await hashPw(form.password);
-      const { data, error } = await supabase.from("users")
-        .insert({ username: form.username.toLowerCase(), password_hash: hash }).select().single();
-      if (error) throw error;
-      const u = { id: data.id, username: data.username };
-      setUser(u); localStorage.setItem("lingua_u", JSON.stringify(u));
-    } catch (e) { setAuthErr("Kayit basarisiz: " + e.message); }
+    const r = await signUp(supabase, form.username, form.password);
+    if (r.error) setAuthErr(r.error);
+    else { setUser(r.user); setForm(f => ({ ...f, password: "" })); }
     setAuthBusy(false);
   };
 
-  const logout = () => {
-    flushProg();
-    progRef.current = emptyProgress();
-    setUser(null); setProg(emptyProgress());
-    localStorage.removeItem("lingua_u"); setScreen("home");
+  const logout = async () => {
+    await flushProg(); // çıkıştan önce bekleyen ilerleme sunucuya gitsin (oturum hâlâ geçerliyken)
+    try { await supabase.auth.signOut({ scope: "local" }); } catch {}
+    setUser(null); setScreen("home");
     setForm({ username: "", password: "" });
   };
 
@@ -324,6 +342,12 @@ export default function App() {
     btn: (a) => ({ background: a ? "#ffd95a" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 10, color: a ? "#0a0a0f" : "#e8e4d9", padding: "10px 16px", fontSize: 13, fontWeight: a ? "bold" : "normal", cursor: "pointer", fontFamily: "inherit" }),
   };
 
+  if (!authReady) return (
+    <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "rgba(232,228,217,0.4)", fontSize: 14 }}>Yukleniyor...</div>
+    </div>
+  );
+
   if (!user) return (
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 380 }}>
@@ -345,12 +369,19 @@ export default function App() {
         <div style={{ ...S.card, padding: "28px 24px" }}>
           <div style={{ fontSize: 12, color: "rgba(232,228,217,0.45)", marginBottom: 6 }}>KULLANICI ADI</div>
           <input style={S.inp} placeholder="kullanici_adi" value={form.username}
+            autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
             onKeyDown={e => e.key === "Enter" && (authTab === "login" ? doLogin() : doRegister())} />
           <div style={{ fontSize: 12, color: "rgba(232,228,217,0.45)", marginBottom: 6 }}>SIFRE</div>
           <input style={S.inp} type="password" placeholder="sifre" value={form.password}
+            autoComplete={authTab === "login" ? "current-password" : "new-password"}
             onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
             onKeyDown={e => e.key === "Enter" && (authTab === "login" ? doLogin() : doRegister())} />
+          {authTab === "register" && (
+            <div style={{ fontSize: 11, color: "rgba(232,228,217,0.35)", marginBottom: 12, lineHeight: 1.5 }}>
+              Kullanici adi: kucuk harf, rakam, nokta, alt cizgi, tire (en az 3). Sifre en az 6 karakter.
+            </div>
+          )}
           {authErr && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#f87171", marginBottom: 14 }}>{authErr}</div>}
           <button onClick={authTab === "login" ? doLogin : doRegister} disabled={authBusy}
             style={{ width: "100%", background: "#ffd95a", border: "none", borderRadius: 10, color: "#0a0a0f", padding: "14px", fontSize: 15, fontWeight: "bold", cursor: authBusy ? "default" : "pointer", fontFamily: "inherit", opacity: authBusy ? 0.6 : 1 }}>
@@ -378,6 +409,14 @@ export default function App() {
       </nav>
 
       <div style={{ maxWidth: 660, margin: "0 auto", padding: "28px 18px" }}>
+        {(loadErr || saveErr) && (
+          <div role="alert" style={{ ...S.card, border: "1px solid rgba(248,113,113,0.35)", color: "#f87171", marginBottom: 16, fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <span>{loadErr
+              ? "Ilerlemen yuklenemedi. Yuklenene kadar yeni ilerleme kaydedilmez."
+              : "Ilerleme kaydedilemedi. Baglantini kontrol et."}</span>
+            <button onClick={() => (loadErr ? loadProg(user.id) : pushProg(progRef.current, user.id))} style={S.btn(false)}>Tekrar dene</button>
+          </div>
+        )}
 
         {screen === "home" && (
           <div>
