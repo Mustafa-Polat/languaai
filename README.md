@@ -115,3 +115,9 @@ Kelime listeleri `App.jsx` içinde değil, ayrı dosyalarda durur ve dil seçili
 | `src/srs.js` | Aralıklı tekrar (Leitner) ve ilerleme anahtarları |
 
 Kelime eklediysen `meta.json` sayılarını da güncelle; `npm test` ikisinin tutarlı olduğunu kontrol eder.
+
+## 🔐 Giriş ve güvenlik
+
+Giriş/kayıt Supabase Auth ile yapılır (`src/auth.js`); ilerleme `user_progress` tablosunda, satır düzeyi
+güvenlikle (RLS) tutulur. Veritabanı kurulumu, Auth ayarları ve eski hesapların taşınması için
+sıralı adımlar `supabase/README.md` dosyasındadır; SQL dosyaları `supabase/` klasöründedir.
