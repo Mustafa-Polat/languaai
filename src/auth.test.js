@@ -111,3 +111,45 @@ test("signUp: Supabase hatası çevrilir", async () => {
   c.auth.signUp.mockResolvedValue({ data: {}, error: { message: "User already registered", status: 422 } });
   expect((await signUp(c, "veli", "secret1")).error).toBe("Bu kullanici adi alinmis.");
 });
+
+// ---- Hata tanısı: gerçek neden görünsün ----
+import { errorCode } from "./auth";
+
+test("errorCode: code, yoksa status, yoksa name; çok uzunsa kırpar", () => {
+  expect(errorCode({ code: "email_address_invalid", status: 400 })).toBe("email_address_invalid");
+  expect(errorCode({ status: 500 })).toBe("500");
+  expect(errorCode({ name: "AuthApiError" })).toBe("AuthApiError");
+  expect(errorCode(null)).toBe("");
+  expect(errorCode({ code: "x".repeat(100) })).toHaveLength(60);
+});
+
+test("kayıt: e-posta alan adı reddedilirse bunu açıkça söyler ve kodu gösterir", () => {
+  const m = authErrorMessage({ code: "email_address_invalid", status: 400, message: 'Email address "a@linguaai.app" is invalid' }, "register");
+  expect(m).toMatch(/gecersiz buldu/);
+  expect(m).toContain("(email_address_invalid)");
+});
+
+test("kayıt: e-posta gönderimi / sınır hataları 'Confirm email' ayarına yönlendirir", () => {
+  expect(authErrorMessage({ code: "email_address_not_authorized", status: 400, message: "Email address not authorized" }, "register"))
+    .toMatch(/Confirm email/);
+  expect(authErrorMessage({ status: 500, message: "Error sending confirmation email" }, "register"))
+    .toMatch(/Confirm email/);
+  const rl = authErrorMessage({ code: "over_email_send_rate_limit", status: 429, message: "email rate limit exceeded" }, "register");
+  expect(rl).toMatch(/Cok fazla deneme/);
+  expect(rl).toContain("(over_email_send_rate_limit)");
+});
+
+test("kayıt: Supabase hata kodlarıyla mevcut kullanıcı ve zayıf şifre tanınır", () => {
+  expect(authErrorMessage({ code: "user_already_exists", status: 422, message: "x" }, "register")).toBe("Bu kullanici adi alinmis.");
+  expect(authErrorMessage({ code: "weak_password", status: 422, message: "x" }, "register")).toMatch(/zayif/);
+  expect(authErrorMessage({ code: "signup_disabled", status: 422, message: "x" }, "register")).toMatch(/kapali/);
+});
+
+test("bilinmeyen hatada kod mesajın sonuna eklenir (giriş ve kayıt)", () => {
+  expect(authErrorMessage({ code: "weird_thing", status: 418, message: "x" }, "register")).toMatch(/Kayit basarisiz.*\(weird_thing\)$/);
+  expect(authErrorMessage({ code: "weird_thing", status: 418, message: "x" }, "login")).toMatch(/Giris basarisiz.*\(weird_thing\)$/);
+});
+
+test("giriş: email_not_confirmed kodu onaysız hesap mesajını verir", () => {
+  expect(authErrorMessage({ code: "email_not_confirmed", status: 400, message: "Email not confirmed" }, "login")).toMatch(/onay bekliyor/);
+});

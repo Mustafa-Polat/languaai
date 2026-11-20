@@ -35,36 +35,60 @@ export function validatePassword(pw) {
   return null;
 }
 
+// Hatadan kısa bir tanı kodu çıkarır (örn. "email_address_invalid", "422"); gösterilen mesajın sonuna
+// eklenir ki beklenmeyen bir hata olduğunda gerçek neden görülebilsin.
+export function errorCode(error) {
+  if (!error) return "";
+  return String(error.code || error.status || error.name || "").slice(0, 60);
+}
+
+const withCode = (text, error) => {
+  const c = errorCode(error);
+  return c ? text + " (" + c + ")" : text;
+};
+
 // Supabase Auth hata mesajlarını kullanıcıya gösterilecek Türkçe metne çevirir.
 // Giriş hatası, kullanıcı adının var olup olmadığını sızdırmasın diye tek mesajdır.
 export function authErrorMessage(error, mode) {
   const msg = String((error && error.message) || "").toLowerCase();
+  const code = String((error && error.code) || "").toLowerCase();
   const status = error && error.status;
+  const rateLimited = status === 429 || code.includes("rate_limit") || msg.includes("rate limit") || msg.includes("too many");
+  // E-posta gönderimiyle ilgili hatalar: hepsi "Confirm email" açıkken ortaya çıkar
+  const emailSending =
+    code === "email_address_not_authorized" || code === "unexpected_failure" ||
+    msg.includes("error sending") || msg.includes("not authorized") || msg.includes("sending confirmation");
+
   if (mode === "login") {
-    if (msg.includes("email not confirmed")) {
-      return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarini kapatman gerekiyor.";
+    if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
+      return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarini kapatip mevcut hesaplari onaylaman gerekiyor.";
     }
-    if (status === 429 || msg.includes("rate limit") || msg.includes("too many")) {
-      return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
-    }
-    if (msg.includes("invalid login") || msg.includes("invalid credentials") || status === 400) {
+    if (rateLimited) return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
+    if (code === "invalid_credentials" || msg.includes("invalid login") || msg.includes("invalid credentials") || status === 400) {
       return "Kullanici adi veya sifre yanlis.";
     }
-    return "Giris basarisiz. Baglantini kontrol edip tekrar dene.";
+    return withCode("Giris basarisiz. Baglantini kontrol edip tekrar dene.", error);
   }
-  if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user_already_exists")) {
+
+  if (code === "user_already_exists" || msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user_already_exists")) {
     return "Bu kullanici adi alinmis.";
   }
-  if (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short"))) {
+  if (code === "email_address_invalid" || (msg.includes("email address") && msg.includes("invalid"))) {
+    return withCode("Supabase bu kullanici adinin e-posta adresini gecersiz buldu (alan adi reddedilmis olabilir).", error);
+  }
+  if (rateLimited) {
+    return withCode("Cok fazla deneme yapildi (e-posta gonderim siniri olabilir). Biraz bekleyip tekrar dene.", error);
+  }
+  if (emailSending) {
+    return withCode("Onay e-postasi gonderilemedi. Supabase'de 'Confirm email' ayarini kapatman gerekiyor.", error);
+  }
+  if (code === "weak_password" || (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short")))) {
     return "Sifre cok zayif. Daha uzun veya daha karisik bir sifre sec.";
   }
-  if (status === 429 || msg.includes("rate limit") || msg.includes("too many")) {
-    return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
-  }
-  if (msg.includes("signups not allowed") || msg.includes("signup is disabled")) {
+  if (code === "signup_disabled" || msg.includes("signups not allowed") || msg.includes("signup is disabled")) {
     return "Yeni kayit su an kapali.";
   }
-  return "Kayit basarisiz. Baglantini kontrol edip tekrar dene.";
+  return withCode("Kayit basarisiz. Baglantini kontrol edip tekrar dene.", error);
 }
 
 // Oturumdaki kullanıcıdan uygulamanın kullandığı { id, username } nesnesini üretir
