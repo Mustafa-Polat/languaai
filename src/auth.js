@@ -140,3 +140,57 @@ export async function signUp(supabase, username, password) {
   }
   return { user: toAppUser(data.user), error: null };
 }
+
+// ---------------------------------------------------------------------------
+// Şifre değiştirme (giriş yapmış kullanıcı)
+// ---------------------------------------------------------------------------
+
+const WRONG_CREDENTIALS = "Kullanici adi veya sifre yanlis.";
+
+// Hata varsa Türkçe mesaj, yoksa null döner. again verilmezse eşleşme kontrolü atlanır.
+export function validatePasswordChange(current, next, again) {
+  if (!current) return "Mevcut sifreni yaz.";
+  const perr = validatePassword(next);
+  if (perr) return perr.replace("Sifre", "Yeni sifre");
+  if (next === current) return "Yeni sifre mevcut sifreyle ayni olamaz.";
+  if (again !== undefined && next !== again) return "Yeni sifreler ayni degil.";
+  return null;
+}
+
+export function passwordChangeErrorMessage(error) {
+  const msg = String((error && error.message) || "").toLowerCase();
+  const code = String((error && error.code) || "").toLowerCase();
+  const status = error && error.status;
+  if (code === "same_password" || msg.includes("different from the old")) {
+    return "Yeni sifre mevcut sifreyle ayni olamaz.";
+  }
+  if (code === "weak_password" || (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short")))) {
+    return "Yeni sifre cok zayif. Daha uzun veya daha karisik bir sifre sec.";
+  }
+  if (status === 429 || code.includes("rate_limit") || msg.includes("rate limit") || msg.includes("too many")) {
+    return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
+  }
+  if (status === 401 || status === 403 || code.includes("session") || code === "not_authenticated" ||
+      code === "reauthentication_needed" || msg.includes("jwt") || msg.includes("session")) {
+    return "Oturum suren dolmus. Cikis yapip tekrar giris yap, sonra yeniden dene.";
+  }
+  return withCode("Sifre degistirilemedi. Baglantini kontrol edip tekrar dene.", error);
+}
+
+// Önce mevcut şifre, aynı hesapla yeniden giriş yapılarak doğrulanır (telefonu açık bırakan
+// birinin şifreyi değiştirmesini zorlaştırır); sonra yeni şifre kaydedilir.
+export async function changePassword(supabase, username, current, next) {
+  const verr = validatePasswordChange(current, next);
+  if (verr) return { error: verr };
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: usernameToEmail(username),
+    password: current,
+  });
+  if (signInError) {
+    const m = authErrorMessage(signInError, "login");
+    return { error: m === WRONG_CREDENTIALS ? "Mevcut sifre yanlis." : m };
+  }
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) return { error: passwordChangeErrorMessage(error) };
+  return { error: null };
+}

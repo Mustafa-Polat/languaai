@@ -98,6 +98,24 @@ select tablename, policyname, cmd, roles from pg_policies where schemaname = 'pu
 Eski tabloları birkaç hafta bekletip sorun çıkmazsa `003` dosyasının sonundaki `drop table` satırlarıyla
 tamamen silebilirsin.
 
+## Şifre değiştirme ve unutulan şifre
+
+- **Şifresini hatırlayan kullanıcı:** Uygulamada **İlerleme** ekranının altındaki **Hesap** bölümünden
+  "Sifre Degistir". Önce mevcut şifre doğrulanır, sonra yenisi kaydedilir.
+- **Şifresini unutan kullanıcı:** Hesaplar uydurma e-postalarla açıldığı için e-postayla sıfırlama yoktur.
+  Yönetici (sen) SQL Editor'de geçici bir şifre verir, kullanıcı bununla girip kendi şifresini
+  İlerleme ekranından değiştirir:
+
+```sql
+update auth.users
+set encrypted_password = crypt('GeciciSifre123', gen_salt('bf')),
+    updated_at = now()
+where email = 'kullaniciadi@linguaai.app';
+```
+
+  `crypt` bulunamadı hatası gelirse `extensions.crypt` ve `extensions.gen_salt` yaz. Geçici şifre en az
+  6 karakter olmalı.
+
 ## Genel kurallar
 
 - `REACT_APP_SUPABASE_ANON_KEY` herkese açıktır (tarayıcıya gömülür), bu normal; güvenliği RLS sağlar.

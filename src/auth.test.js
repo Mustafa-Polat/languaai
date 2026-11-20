@@ -164,3 +164,68 @@ test("email_provider_disabled: hem kayıt hem giriş 'sağlayıcıyı aç' mesaj
   }
   expect(reg).not.toMatch(/Kayit basarisiz/);
 });
+
+// ---- Şifre değiştirme ----
+import { validatePasswordChange, passwordChangeErrorMessage, changePassword } from "./auth";
+
+test("validatePasswordChange: boş/kısa/aynı/uyuşmayan şifreler reddedilir", () => {
+  expect(validatePasswordChange("", "yeni123")).toMatch(/Mevcut sifreni yaz/);
+  expect(validatePasswordChange("eski123", "123")).toMatch(/Yeni sifre en az 6/);
+  expect(validatePasswordChange("eski123", "x".repeat(73))).toMatch(/Yeni sifre en fazla 72/);
+  expect(validatePasswordChange("ayni123", "ayni123")).toMatch(/ayni olamaz/);
+  expect(validatePasswordChange("eski123", "yeni123", "yeni124")).toMatch(/ayni degil/);
+  expect(validatePasswordChange("eski123", "yeni123", "yeni123")).toBeNull();
+  expect(validatePasswordChange("eski123", "yeni123")).toBeNull(); // again verilmezse eşleşme kontrolü yok
+});
+
+test("passwordChangeErrorMessage: bilinen hatalar çevrilir, bilinmeyende kod görünür", () => {
+  expect(passwordChangeErrorMessage({ code: "same_password", status: 422, message: "x" })).toMatch(/ayni olamaz/);
+  expect(passwordChangeErrorMessage({ code: "weak_password", status: 422, message: "x" })).toMatch(/zayif/);
+  expect(passwordChangeErrorMessage({ status: 429, message: "x" })).toMatch(/Cok fazla/);
+  expect(passwordChangeErrorMessage({ status: 401, message: "invalid JWT" })).toMatch(/Oturum suren dolmus/);
+  expect(passwordChangeErrorMessage({ code: "weird", status: 418, message: "x" })).toMatch(/Sifre degistirilemedi.*\(weird\)$/);
+});
+
+const pwClient = () => ({ auth: { signInWithPassword: jest.fn(), updateUser: jest.fn() } });
+
+test("changePassword: geçersiz giriş ağa çıkmadan reddedilir", async () => {
+  const c = pwClient();
+  expect((await changePassword(c, "ali", "eski123", "123")).error).toMatch(/en az 6/);
+  expect(c.auth.signInWithPassword).not.toHaveBeenCalled();
+  expect(c.auth.updateUser).not.toHaveBeenCalled();
+});
+
+test("changePassword: yanlış mevcut şifrede yeni şifre KAYDEDİLMEZ", async () => {
+  const c = pwClient();
+  c.auth.signInWithPassword.mockResolvedValue({ data: {}, error: { code: "invalid_credentials", status: 400, message: "Invalid login credentials" } });
+  const r = await changePassword(c, "ali", "yanlis1", "yeni123");
+  expect(r.error).toBe("Mevcut sifre yanlis.");
+  expect(c.auth.updateUser).not.toHaveBeenCalled();
+});
+
+test("changePassword: başarılı akış önce doğrular, sonra yeni şifreyi gönderir", async () => {
+  const c = pwClient();
+  const order = [];
+  c.auth.signInWithPassword.mockImplementation((a) => { order.push(["signIn", a]); return Promise.resolve({ data: {}, error: null }); });
+  c.auth.updateUser.mockImplementation((a) => { order.push(["update", a]); return Promise.resolve({ data: {}, error: null }); });
+  const r = await changePassword(c, "Ali", "eski123", "yeni123");
+  expect(r).toEqual({ error: null });
+  expect(order).toEqual([
+    ["signIn", { email: "ali@linguaai.app", password: "eski123" }],
+    ["update", { password: "yeni123" }],
+  ]);
+});
+
+test("changePassword: Supabase güncelleme hatası çevrilir", async () => {
+  const c = pwClient();
+  c.auth.signInWithPassword.mockResolvedValue({ data: {}, error: null });
+  c.auth.updateUser.mockResolvedValue({ data: {}, error: { code: "weak_password", status: 422, message: "x" } });
+  expect((await changePassword(c, "ali", "eski123", "yeni123")).error).toMatch(/zayif/);
+});
+
+test("changePassword: giriş doğrulamasında hız sınırı mesajı olduğu gibi gösterilir", async () => {
+  const c = pwClient();
+  c.auth.signInWithPassword.mockResolvedValue({ data: {}, error: { status: 429, message: "rate limit" } });
+  expect((await changePassword(c, "ali", "eski123", "yeni123")).error).toMatch(/Cok fazla deneme/);
+  expect(c.auth.updateUser).not.toHaveBeenCalled();
+});

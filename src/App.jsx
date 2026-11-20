@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import GermanCourse from "./GermanCourse";
+import ChangePassword from "./ChangePassword";
 import { DE_LIBRARY, DE_MODULES } from "./german";
 import {
   shuffle, cardKey, rateCard, demoteCard, buildDeck, deckStats, pickQuizCard, prepareProgress, MIGRATED_KEY,
@@ -725,6 +726,7 @@ export default function App() {
                   </div>
                 );
               })}
+              <ChangePassword supabase={supabase} username={user.username} S={S} />
               <button onClick={() => saveProg(emptyProgress())} style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 12, color: "#f87171", padding: "14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
                 Ilerlemeyi Sifirla
               </button>
