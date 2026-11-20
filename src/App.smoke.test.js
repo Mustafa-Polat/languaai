@@ -12,6 +12,8 @@ const mockState = {
   saveError: null,
   signInResult: null,
   signUpResult: null,
+  updateUserResult: { data: {}, error: null },
+  lastUpdateUser: null,
   upserts: [],
   tables: [],           // from() ile istenen tablo adları
   events: [],           // sıralı olaylar: "upsert", "signOut"
@@ -34,6 +36,11 @@ jest.mock("@supabase/supabase-js", () => ({
       signUp: (args) => {
         mockState.lastSignUp = args;
         return Promise.resolve(mockState.signUpResult);
+      },
+      updateUser: (attrs) => {
+        mockState.lastUpdateUser = attrs;
+        mockState.events.push("updateUser");
+        return Promise.resolve(mockState.updateUserResult);
       },
       signOut: () => {
         mockState.events.push("signOut");
@@ -100,6 +107,7 @@ beforeEach(() => {
     session: { user: authUser() },
     progressRow: { learned: { about: true, "der Tisch": true }, quiz_correct: 3, quiz_total: 5 },
     loadError: null, saveError: null, signInResult: null, signUpResult: null,
+    updateUserResult: { data: {}, error: null }, lastUpdateUser: null,
     upserts: [], tables: [], events: [], listener: null, lastSignIn: null, lastSignUp: null,
   });
   container = document.createElement("div");
@@ -322,4 +330,74 @@ test("Rusça seçilince Rusça listesi yüklenir", async () => {
   await flush();
   expect(textOf(container)).toMatch(/\d+ tekrar, \d+ yeni/);
   expect(textOf(container)).toContain("240"); // L1 kelime sayısı
+});
+
+// ---------- Şifre değiştirme ----------
+
+async function openChangePassword(container) {
+  await act(async () => { byText(container, "Ilerleme").click(); });
+  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  const inputs = container.querySelectorAll('input[type="password"]');
+  expect(inputs).toHaveLength(3);
+  return inputs;
+}
+
+test("şifre değiştir: İlerleme ekranında hesap bölümü görünür, form açılır", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  await act(async () => { byText(container, "Ilerleme").click(); });
+  expect(textOf(container)).toContain("HESAP");
+  expect(textOf(container)).toContain("test");
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
+  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(3);
+});
+
+test("şifre değiştir: başarılı akış eski şifreyi doğrular, yenisini kaydeder, form kapanır", async () => {
+  mockState.signInResult = { data: { user: authUser() }, error: null };
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const [cur, next, again] = await openChangePassword(container);
+  await act(async () => { typeInto(cur, "eski123"); typeInto(next, "yeni123"); typeInto(again, "yeni123"); });
+  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
+  await flush();
+  expect(mockState.lastSignIn).toEqual({ email: "test@linguaai.app", password: "eski123" });
+  expect(mockState.lastUpdateUser).toEqual({ password: "yeni123" });
+  expect(textOf(container)).toContain("Sifren degistirildi");
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
+});
+
+test("şifre değiştir: tekrar eşleşmezse ağa çıkılmaz", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const [cur, next, again] = await openChangePassword(container);
+  await act(async () => { typeInto(cur, "eski123"); typeInto(next, "yeni123"); typeInto(again, "yeni124"); });
+  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
+  expect(textOf(container)).toContain("Yeni sifreler ayni degil");
+  expect(mockState.lastSignIn).toBeNull();
+  expect(mockState.lastUpdateUser).toBeNull();
+});
+
+test("şifre değiştir: mevcut şifre yanlışsa yeni şifre kaydedilmez ve form açık kalır", async () => {
+  mockState.signInResult = { data: {}, error: { code: "invalid_credentials", status: 400, message: "Invalid login credentials" } };
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const [cur, next, again] = await openChangePassword(container);
+  await act(async () => { typeInto(cur, "yanlis1"); typeInto(next, "yeni123"); typeInto(again, "yeni123"); });
+  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
+  await flush();
+  expect(textOf(container)).toContain("Mevcut sifre yanlis.");
+  expect(mockState.lastUpdateUser).toBeNull();
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(3);
+});
+
+test("şifre değiştir: Vazgeç formu kapatır ve alanları temizler", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const [cur] = await openChangePassword(container);
+  await act(async () => { typeInto(cur, "bir seyler"); });
+  await act(async () => { byText(container, "Vazgec").click(); });
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
+  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  expect(container.querySelectorAll('input[type="password"]')[0].value).toBe("");
 });

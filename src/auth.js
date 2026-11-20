@@ -47,6 +47,10 @@ const withCode = (text, error) => {
   return c ? text + " (" + c + ")" : text;
 };
 
+// "Confirm email" ile karıştırılan ayrı bir ayar: Email sağlayıcısının kendisi kapalıysa ne kayıt ne giriş çalışır
+const PROVIDER_OFF =
+  "Supabase'de e-posta girisi kapali. Authentication > Sign In / Providers > Email saglayicisini ac (yalnizca 'Confirm email' kapali olmali).";
+
 // Supabase Auth hata mesajlarını kullanıcıya gösterilecek Türkçe metne çevirir.
 // Giriş hatası, kullanıcı adının var olup olmadığını sızdırmasın diye tek mesajdır.
 export function authErrorMessage(error, mode) {
@@ -63,6 +67,7 @@ export function authErrorMessage(error, mode) {
     if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
       return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarini kapatip mevcut hesaplari onaylaman gerekiyor.";
     }
+    if (code === "email_provider_disabled") return PROVIDER_OFF;
     if (rateLimited) return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
     if (code === "invalid_credentials" || msg.includes("invalid login") || msg.includes("invalid credentials") || status === 400) {
       return "Kullanici adi veya sifre yanlis.";
@@ -70,6 +75,7 @@ export function authErrorMessage(error, mode) {
     return withCode("Giris basarisiz. Baglantini kontrol edip tekrar dene.", error);
   }
 
+  if (code === "email_provider_disabled") return PROVIDER_OFF;
   if (code === "user_already_exists" || msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user_already_exists")) {
     return "Bu kullanici adi alinmis.";
   }
@@ -133,4 +139,58 @@ export async function signUp(supabase, username, password) {
     return { user: null, error: "Bu kullanici adi alinmis." };
   }
   return { user: toAppUser(data.user), error: null };
+}
+
+// ---------------------------------------------------------------------------
+// Şifre değiştirme (giriş yapmış kullanıcı)
+// ---------------------------------------------------------------------------
+
+const WRONG_CREDENTIALS = "Kullanici adi veya sifre yanlis.";
+
+// Hata varsa Türkçe mesaj, yoksa null döner. again verilmezse eşleşme kontrolü atlanır.
+export function validatePasswordChange(current, next, again) {
+  if (!current) return "Mevcut sifreni yaz.";
+  const perr = validatePassword(next);
+  if (perr) return perr.replace("Sifre", "Yeni sifre");
+  if (next === current) return "Yeni sifre mevcut sifreyle ayni olamaz.";
+  if (again !== undefined && next !== again) return "Yeni sifreler ayni degil.";
+  return null;
+}
+
+export function passwordChangeErrorMessage(error) {
+  const msg = String((error && error.message) || "").toLowerCase();
+  const code = String((error && error.code) || "").toLowerCase();
+  const status = error && error.status;
+  if (code === "same_password" || msg.includes("different from the old")) {
+    return "Yeni sifre mevcut sifreyle ayni olamaz.";
+  }
+  if (code === "weak_password" || (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short")))) {
+    return "Yeni sifre cok zayif. Daha uzun veya daha karisik bir sifre sec.";
+  }
+  if (status === 429 || code.includes("rate_limit") || msg.includes("rate limit") || msg.includes("too many")) {
+    return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
+  }
+  if (status === 401 || status === 403 || code.includes("session") || code === "not_authenticated" ||
+      code === "reauthentication_needed" || msg.includes("jwt") || msg.includes("session")) {
+    return "Oturum suren dolmus. Cikis yapip tekrar giris yap, sonra yeniden dene.";
+  }
+  return withCode("Sifre degistirilemedi. Baglantini kontrol edip tekrar dene.", error);
+}
+
+// Önce mevcut şifre, aynı hesapla yeniden giriş yapılarak doğrulanır (telefonu açık bırakan
+// birinin şifreyi değiştirmesini zorlaştırır); sonra yeni şifre kaydedilir.
+export async function changePassword(supabase, username, current, next) {
+  const verr = validatePasswordChange(current, next);
+  if (verr) return { error: verr };
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: usernameToEmail(username),
+    password: current,
+  });
+  if (signInError) {
+    const m = authErrorMessage(signInError, "login");
+    return { error: m === WRONG_CREDENTIALS ? "Mevcut sifre yanlis." : m };
+  }
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) return { error: passwordChangeErrorMessage(error) };
+  return { error: null };
 }
