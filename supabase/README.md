@@ -41,6 +41,18 @@ Supabase paneli → **Authentication** bölümünde, Email sağlayıcısının a
 - Menü adları Supabase'in sürümüne göre değişebilir; ayarın yerini bulamazsan arama kutusuna
   "confirm email" yaz.
 
+**Confirm email'i kapatmak, daha önce oluşmuş onaysız hesapları onaylamaz.** Ayarı kapatmadan önce
+kayıt olunduysa, o hesaplar için giriş "Hesap onay bekliyor" der. SQL Editor'de şunu bir kez çalıştır:
+
+```sql
+update auth.users
+set email_confirmed_at = now()
+where email like '%@linguaai.app' and email_confirmed_at is null;
+```
+
+Kayıt sırasında beklenmedik bir hata olursa uygulama mesajın sonunda Supabase'in hata kodunu gösterir
+(örn. `(email_address_invalid)`); bu kod nedeni bulmaya yarar.
+
 Bir sonuç: e-posta olmadığı için **"şifremi unuttum" çalışmaz**. Şifreni unutursan Authentication →
 Users listesinden o kullanıcı için yeni şifre belirleyebilirsin.
 
