@@ -153,3 +153,14 @@ test("bilinmeyen hatada kod mesajın sonuna eklenir (giriş ve kayıt)", () => {
 test("giriş: email_not_confirmed kodu onaysız hesap mesajını verir", () => {
   expect(authErrorMessage({ code: "email_not_confirmed", status: 400, message: "Email not confirmed" }, "login")).toMatch(/onay bekliyor/);
 });
+
+test("email_provider_disabled: hem kayıt hem giriş 'sağlayıcıyı aç' mesajı verir", () => {
+  const err = { code: "email_provider_disabled", status: 400, message: "Email signups are disabled" };
+  const reg = authErrorMessage(err, "register");
+  const log = authErrorMessage({ ...err, status: 422 }, "login");
+  for (const m of [reg, log]) {
+    expect(m).toMatch(/e-posta girisi kapali/);
+    expect(m).toMatch(/Email saglayicisini ac/);
+  }
+  expect(reg).not.toMatch(/Kayit basarisiz/);
+});

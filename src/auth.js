@@ -47,6 +47,10 @@ const withCode = (text, error) => {
   return c ? text + " (" + c + ")" : text;
 };
 
+// "Confirm email" ile karıştırılan ayrı bir ayar: Email sağlayıcısının kendisi kapalıysa ne kayıt ne giriş çalışır
+const PROVIDER_OFF =
+  "Supabase'de e-posta girisi kapali. Authentication > Sign In / Providers > Email saglayicisini ac (yalnizca 'Confirm email' kapali olmali).";
+
 // Supabase Auth hata mesajlarını kullanıcıya gösterilecek Türkçe metne çevirir.
 // Giriş hatası, kullanıcı adının var olup olmadığını sızdırmasın diye tek mesajdır.
 export function authErrorMessage(error, mode) {
@@ -63,6 +67,7 @@ export function authErrorMessage(error, mode) {
     if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
       return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarini kapatip mevcut hesaplari onaylaman gerekiyor.";
     }
+    if (code === "email_provider_disabled") return PROVIDER_OFF;
     if (rateLimited) return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
     if (code === "invalid_credentials" || msg.includes("invalid login") || msg.includes("invalid credentials") || status === 400) {
       return "Kullanici adi veya sifre yanlis.";
@@ -70,6 +75,7 @@ export function authErrorMessage(error, mode) {
     return withCode("Giris basarisiz. Baglantini kontrol edip tekrar dene.", error);
   }
 
+  if (code === "email_provider_disabled") return PROVIDER_OFF;
   if (code === "user_already_exists" || msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user_already_exists")) {
     return "Bu kullanici adi alinmis.";
   }

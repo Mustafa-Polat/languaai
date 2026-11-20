@@ -34,6 +34,8 @@ bu yüzden 4. ve 5. adımı peş peşe yapman iyi olur.
 
 Supabase paneli → **Authentication** bölümünde, Email sağlayıcısının ayarlarında:
 
+- **Email sağlayıcısı (Enable Email provider): AÇIK.** Bu, aşağıdaki "Confirm email" ayarından ayrıdır.
+  Sağlayıcı kapalıysa ne kayıt ne giriş çalışır (Supabase `email_provider_disabled` döner).
 - **Confirm email: KAPALI.** Kullanıcı adları `kullaniciadi@linguaai.app` biçiminde uydurma
   e-postalara çevrilir (`src/auth.js`), bu adreslere e-posta gidemez. Açık kalırsa kayıt olunur ama
   giriş yapılamaz; uygulama bunu "Confirm email ayarını kapatman gerekiyor" diye bildirir.
