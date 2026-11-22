@@ -47,6 +47,22 @@ function writePref(key, value) {
   try { localStorage.setItem(PREF_PREFIX + key, value); } catch {}
 }
 
+// Özgün LINGUA logosu: konuşma balonu + "L" + parıltı
+function Logo({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 512 512" role="img" aria-label="LinguaAI logosu" style={{ display: "block", flexShrink: 0 }}>
+      <defs>
+        <linearGradient id="lg-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#1c1c32" /><stop offset="1" stopColor="#0a0a0f" /></linearGradient>
+        <linearGradient id="lg-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffe98a" /><stop offset="1" stopColor="#f5a30a" /></linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="112" fill="url(#lg-bg)" />
+      <path d="M148 120h216a52 52 0 0 1 52 52v110a52 52 0 0 1-52 52H236l-72 60a8 8 0 0 1-13-6v-54a52 52 0 0 1-39-50V172a52 52 0 0 1 52-52z" fill="url(#lg-gold)" />
+      <path d="M208 180v128h100" fill="none" stroke="#0a0a0f" strokeWidth="34" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M352 190l8 20 20 8-20 8-8 20-8-20-20-8 20-8z" fill="#0a0a0f" />
+    </svg>
+  );
+}
+
 const TABS = [["home", "🏠", "Ana"], ["library", "📖", "Liste"], ["stats", "📊", "İlerleme"]];
 
 const emptyProgress = () => ({ learned: {}, qCorrect: 0, qTotal: 0 });
@@ -381,7 +397,7 @@ export default function App() {
     page: { minHeight: "100vh", background: "#0a0a0f", fontFamily: "Georgia,serif", color: "#e8e4d9" },
     card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 18, padding: "20px 24px" },
     inp: { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#e8e4d9", padding: "12px 16px", fontSize: 15, fontFamily: "inherit", outline: "none", marginBottom: 12, display: "block" },
-    btn: (a) => ({ background: a ? "#ffd95a" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 10, color: a ? "#0a0a0f" : "#e8e4d9", padding: "10px 16px", fontSize: 13, fontWeight: a ? "bold" : "normal", cursor: "pointer", fontFamily: "inherit" }),
+    btn: (a) => ({ background: a ? "linear-gradient(135deg,#ffe58a,#f7b928)" : "rgba(255,255,255,0.05)", border: a ? "1px solid rgba(255,217,90,0.6)" : "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: a ? "#1a1403" : "#e8e4d9", padding: "10px 16px", fontSize: 13, fontWeight: a ? "bold" : "normal", cursor: "pointer", fontFamily: "inherit", boxShadow: a ? "0 4px 14px rgba(247,185,40,0.28)" : "none" }),
   };
 
   const showTabs = screen !== "flashcard" && screen !== "quiz"; // çalışma ekranlarında dikkat dağıtmasın
@@ -398,15 +414,15 @@ export default function App() {
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 50, marginBottom: 8 }}>&#128218;</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, filter: "drop-shadow(0 8px 24px rgba(255,217,90,0.25))" }}><Logo size={84} /></div>
           <h1 style={{ fontSize: 28, fontWeight: "bold", color: "#ffd95a", letterSpacing: 2, margin: 0 }}>LINGUA</h1>
           <p style={{ color: "rgba(232,228,217,0.4)", fontSize: 13, margin: "6px 0 0" }}>{totalCount("en") + totalCount("ru") + totalCount("de")} kelime · İngilizce, Rusça, Almanca</p>
         </div>
         <div style={{ display: "flex", marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 4 }}>
           {["login","register"].map(t => (
             <button key={t} onClick={() => { setAuthTab(t); setAuthErr(""); }} style={{
-              flex: 1, background: authTab === t ? "#ffd95a" : "transparent", border: "none",
-              borderRadius: 8, color: authTab === t ? "#0a0a0f" : "rgba(232,228,217,0.5)",
+              flex: 1, background: authTab === t ? "linear-gradient(135deg,#ffe58a,#f7b928)" : "transparent", border: "none",
+              borderRadius: 8, boxShadow: authTab === t ? "0 3px 10px rgba(247,185,40,0.25)" : "none", color: authTab === t ? "#0a0a0f" : "rgba(232,228,217,0.5)",
               padding: "10px", fontSize: 14, fontWeight: authTab === t ? "bold" : "normal",
               cursor: "pointer", fontFamily: "inherit",
             }}>{t === "login" ? "Giriş Yap" : "Kayıt Ol"}</button>
@@ -430,7 +446,7 @@ export default function App() {
           )}
           {authErr && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#f87171", marginBottom: 14 }}>{authErr}</div>}
           <button onClick={authTab === "login" ? doLogin : doRegister} disabled={authBusy}
-            style={{ width: "100%", background: "#ffd95a", border: "none", borderRadius: 10, color: "#0a0a0f", padding: "14px", fontSize: 15, fontWeight: "bold", cursor: authBusy ? "default" : "pointer", fontFamily: "inherit", opacity: authBusy ? 0.6 : 1 }}>
+            style={{ width: "100%", background: "linear-gradient(135deg,#ffe58a,#f7b928)", border: "none", borderRadius: 12, boxShadow: "0 6px 20px rgba(247,185,40,0.3)", color: "#1a1403", padding: "15px", fontSize: 15, fontWeight: "bold", letterSpacing: 0.3, cursor: authBusy ? "default" : "pointer", fontFamily: "inherit", opacity: authBusy ? 0.6 : 1 }}>
             {authBusy ? "Bekleyin..." : authTab === "login" ? "Giriş Yap" : "Kayıt Ol"}
           </button>
         </div>
@@ -442,7 +458,7 @@ export default function App() {
     <div style={S.page}>
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(10,10,15,0.96)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,217,90,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <span style={{ fontSize: 18 }}>&#128218;</span>
+          <Logo size={30} />
           <span style={{ fontSize: 15, fontWeight: "bold", color: "#ffd95a", letterSpacing: 2 }}>LINGUA</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -479,7 +495,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 8, marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 5 }}>
               {[["en","🇬🇧 İngilizce"],["ru","🇷🇺 Rusça"],["de","🇩🇪 Almanca"]].map(([l, label]) => (
                 <button key={l} onClick={() => setLang(l)} style={{
-                  flex: 1, background: lang === l ? "#ffd95a" : "transparent",
+                  flex: 1, background: lang === l ? "linear-gradient(135deg,#ffe58a,#f7b928)" : "transparent", boxShadow: lang === l ? "0 3px 10px rgba(247,185,40,0.25)" : "none",
                   border: "none", borderRadius: 8, color: lang === l ? "#0a0a0f" : "rgba(232,228,217,0.5)",
                   padding: "11px", fontSize: 14, fontWeight: lang === l ? "bold" : "normal",
                   cursor: "pointer", fontFamily: "inherit"
@@ -531,19 +547,19 @@ export default function App() {
               )}
             </div>
             {lang === "de" && (
-              <button onClick={() => nav("german")} style={{ width: "100%", background: "linear-gradient(135deg,#34d399,#059669)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "20px 16px", fontSize: 16, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center", marginBottom: 12 }}>
+              <button onClick={() => nav("german")} style={{ width: "100%", background: "linear-gradient(135deg,#34d399,#059669)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(5,150,105,0.3)", color: "#052e1c", padding: "20px 16px", fontSize: 16, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center", marginBottom: 12 }}>
                 <div style={{ fontSize: 26, marginBottom: 4 }}>&#127891;</div>
                 Almanca A1 Dersleri
                 <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, fontWeight: "normal" }}>{DE_MODULES.reduce((n, m) => n + m.lessons.length, 0)} ders - gramer, örnekler, alıştırmalar</div>
               </button>
             )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 16, color: "#0a0a0f", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
+              <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(245,158,11,0.28)", color: "#1a1403", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#128218;</div>
                 Flashcard
                 <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{curLevelLabel} - {!libReady ? "yukleniyor..." : dk.due + dk.fresh > 0 ? dk.due + " tekrar, " + dk.fresh + " yeni" : "erken tekrar"}</div>
               </button>
-              <button onClick={startQuiz} style={{ background: "linear-gradient(135deg,#60a5fa,#2563eb)", border: "none", borderRadius: 16, color: "#fff", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
+              <button onClick={startQuiz} style={{ background: "linear-gradient(135deg,#60a5fa,#2563eb)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(37,99,235,0.3)", color: "#fff", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#129504;</div>
                 Quiz
                 <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>Sonsuz soru</div>
@@ -810,8 +826,8 @@ export default function App() {
               const active = screen === s || (s === "home" && screen === "german");
               return (
                 <button key={s} onClick={() => nav(s)} aria-current={active ? "page" : undefined}
-                  style={{ flex: 1, background: "transparent", border: "none", padding: "9px 4px 8px", cursor: "pointer", fontFamily: "inherit", color: active ? "#ffd95a" : "rgba(232,228,217,0.45)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+                  style={{ flex: 1, background: "transparent", border: "none", padding: "8px 4px 8px", cursor: "pointer", fontFamily: "inherit", color: active ? "#ffd95a" : "rgba(232,228,217,0.45)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1, padding: "4px 18px", borderRadius: 999, background: active ? "rgba(255,217,90,0.14)" : "transparent", transition: "background .2s" }}>{icon}</span>
                   <span style={{ fontSize: 11, fontWeight: active ? "bold" : "normal" }}>{label}</span>
                 </button>
               );
