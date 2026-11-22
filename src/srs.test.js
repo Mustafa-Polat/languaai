@@ -1,6 +1,6 @@
 import {
   DAY, SRS_KEY, MIGRATED_KEY, dayOf, cardKey, rateCard, demoteCard, buildDeck, deckStats,
-  pickQuizCard, prepareProgress, shuffle,
+  pickQuizCard, prepareProgress, shuffle, previewDays, formatDays,
 } from "./srs";
 
 const NOW = new Date("2026-11-17T10:00:00").getTime();
@@ -136,4 +136,19 @@ test("shuffle: aynı elemanları döndürür, girdiyi değiştirmez", () => {
   const out = shuffle(src);
   expect([...out].sort()).toEqual(src);
   expect(src).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+});
+
+test("previewDays: yeni kart için Zor=bugün, Tamam=1 gün, Öğrendim=7 gün; kaydı değiştirmez", () => {
+  const p = empty();
+  const c = en("about");
+  expect(previewDays(p, c, "hard", NOW)).toBe(0);
+  expect(previewDays(p, c, "ok", NOW)).toBe(1);
+  expect(previewDays(p, c, "learned", NOW)).toBe(7);
+  expect(p.learned).toEqual({});
+});
+
+test("formatDays: bugün / yarın / N gün", () => {
+  expect(formatDays(0)).toBe("bugün");
+  expect(formatDays(1)).toBe("yarın");
+  expect(formatDays(14)).toBe("14 gün");
 });

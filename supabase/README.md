@@ -101,7 +101,7 @@ tamamen silebilirsin.
 ## Şifre değiştirme ve unutulan şifre
 
 - **Şifresini hatırlayan kullanıcı:** Uygulamada **İlerleme** ekranının altındaki **Hesap** bölümünden
-  "Sifre Degistir". Önce mevcut şifre doğrulanır, sonra yenisi kaydedilir.
+  "Şifre Değiştir". Önce mevcut şifre doğrulanır, sonra yenisi kaydedilir.
 - **Şifresini unutan kullanıcı:** Hesaplar uydurma e-postalarla açıldığı için e-postayla sıfırlama yoktur.
   Yönetici (sen) SQL Editor'de geçici bir şifre verir, kullanıcı bununla girip kendi şifresini
   İlerleme ekranından değiştirir:

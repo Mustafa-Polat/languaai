@@ -58,6 +58,15 @@ export function rateCard(prog, card, rating, now = Date.now()) {
   return withEntry(prog, key, [box, due, lapses]);
 }
 
+// Bir puanın kartı kaç gün sonra geri getireceği (arayüzde butonların altında gösterilir)
+export function previewDays(prog, card, rating, now = Date.now()) {
+  const next = rateCard(prog, card, rating, now);
+  const e = (next.learned[SRS_KEY] || {})[cardKey(card)];
+  return e ? Math.max(0, e[1] - dayOf(now)) : 0;
+}
+
+export const formatDays = (d) => (d <= 0 ? "bugün" : d === 1 ? "yarın" : d + " gün");
+
 // Quiz'de yanlış bilinen kelime başa döner (doğru cevap mevcut kutuyu değiştirmez)
 export function demoteCard(prog, card, now = Date.now()) {
   const key = cardKey(card);

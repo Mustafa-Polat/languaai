@@ -21,17 +21,17 @@ const USERNAME_RE = /^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$/;
 // Hata varsa Türkçe mesaj, yoksa null döner
 export function validateUsername(raw) {
   const u = normalizeUsername(raw);
-  if (u.length < USERNAME_MIN) return "Kullanici adi en az " + USERNAME_MIN + " karakter.";
-  if (u.length > USERNAME_MAX) return "Kullanici adi en fazla " + USERNAME_MAX + " karakter.";
+  if (u.length < USERNAME_MIN) return "Kullanıcı adı en az " + USERNAME_MIN + " karakter.";
+  if (u.length > USERNAME_MAX) return "Kullanıcı adı en fazla " + USERNAME_MAX + " karakter.";
   if (!USERNAME_RE.test(u) || /[._-]{2}/.test(u)) {
-    return "Kullanici adi sadece kucuk harf (a-z), rakam, nokta, alt cizgi ve tire icerebilir.";
+    return "Kullanıcı adı sadece küçük harf (a-z), rakam, nokta, alt çizgi ve tire içerebilir.";
   }
   return null;
 }
 
 export function validatePassword(pw) {
-  if (!pw || pw.length < PASSWORD_MIN) return "Sifre en az " + PASSWORD_MIN + " karakter.";
-  if (pw.length > 72) return "Sifre en fazla 72 karakter."; // bcrypt sınırı
+  if (!pw || pw.length < PASSWORD_MIN) return "Şifre en az " + PASSWORD_MIN + " karakter.";
+  if (pw.length > 72) return "Şifre en fazla 72 karakter."; // bcrypt sınırı
   return null;
 }
 
@@ -49,7 +49,7 @@ const withCode = (text, error) => {
 
 // "Confirm email" ile karıştırılan ayrı bir ayar: Email sağlayıcısının kendisi kapalıysa ne kayıt ne giriş çalışır
 const PROVIDER_OFF =
-  "Supabase'de e-posta girisi kapali. Authentication > Sign In / Providers > Email saglayicisini ac (yalnizca 'Confirm email' kapali olmali).";
+  "Supabase'de e-posta girişi kapalı. Authentication > Sign In / Providers > Email sağlayıcısını ac (yalnızca 'Confirm email' kapalı olmali).";
 
 // Supabase Auth hata mesajlarını kullanıcıya gösterilecek Türkçe metne çevirir.
 // Giriş hatası, kullanıcı adının var olup olmadığını sızdırmasın diye tek mesajdır.
@@ -65,36 +65,36 @@ export function authErrorMessage(error, mode) {
 
   if (mode === "login") {
     if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
-      return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarini kapatip mevcut hesaplari onaylaman gerekiyor.";
+      return "Hesap onay bekliyor. Supabase'de 'Confirm email' ayarını kapatıp mevcut hesaplari onaylaman gerekiyor.";
     }
     if (code === "email_provider_disabled") return PROVIDER_OFF;
-    if (rateLimited) return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
+    if (rateLimited) return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.";
     if (code === "invalid_credentials" || msg.includes("invalid login") || msg.includes("invalid credentials") || status === 400) {
-      return "Kullanici adi veya sifre yanlis.";
+      return "Kullanıcı adı veya şifre yanlış.";
     }
-    return withCode("Giris basarisiz. Baglantini kontrol edip tekrar dene.", error);
+    return withCode("Giriş başarısız. Bağlantını kontrol edip tekrar dene.", error);
   }
 
   if (code === "email_provider_disabled") return PROVIDER_OFF;
   if (code === "user_already_exists" || msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user_already_exists")) {
-    return "Bu kullanici adi alinmis.";
+    return "Bu kullanıcı adı alınmış.";
   }
   if (code === "email_address_invalid" || (msg.includes("email address") && msg.includes("invalid"))) {
-    return withCode("Supabase bu kullanici adinin e-posta adresini gecersiz buldu (alan adi reddedilmis olabilir).", error);
+    return withCode("Supabase bu kullanıcı adının e-posta adresini geçersiz buldu (alan adı reddedilmiş olabilir).", error);
   }
   if (rateLimited) {
-    return withCode("Cok fazla deneme yapildi (e-posta gonderim siniri olabilir). Biraz bekleyip tekrar dene.", error);
+    return withCode("Çok fazla deneme yapıldı (e-posta gönderim sınırı olabilir). Biraz bekleyip tekrar dene.", error);
   }
   if (emailSending) {
-    return withCode("Onay e-postasi gonderilemedi. Supabase'de 'Confirm email' ayarini kapatman gerekiyor.", error);
+    return withCode("Onay e-postası gönderilemedi. Supabase'de 'Confirm email' ayarını kapatman gerekiyor.", error);
   }
   if (code === "weak_password" || (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short")))) {
-    return "Sifre cok zayif. Daha uzun veya daha karisik bir sifre sec.";
+    return "Şifre çok zayıf. Daha uzun veya daha karışık bir şifre seç.";
   }
   if (code === "signup_disabled" || msg.includes("signups not allowed") || msg.includes("signup is disabled")) {
-    return "Yeni kayit su an kapali.";
+    return "Yeni kayıt şu an kapalı.";
   }
-  return withCode("Kayit basarisiz. Baglantini kontrol edip tekrar dene.", error);
+  return withCode("Kayıt başarısız. Bağlantını kontrol edip tekrar dene.", error);
 }
 
 // Oturumdaki kullanıcıdan uygulamanın kullandığı { id, username } nesnesini üretir
@@ -131,12 +131,12 @@ export async function signUp(supabase, username, password) {
   if (!data || !data.session || !data.user) {
     return {
       user: null,
-      error: "Kayit olusturuldu ama oturum acilamadi. Supabase'de 'Confirm email' ayarini kapatman gerekiyor.",
+      error: "Kayıt oluşturuldu ama oturum açılamadı. Supabase'de 'Confirm email' ayarını kapatman gerekiyor.",
     };
   }
   // E-posta numaralandırma korumasıyla var olan bir hesap için sahte kullanıcı dönebilir
   if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-    return { user: null, error: "Bu kullanici adi alinmis." };
+    return { user: null, error: "Bu kullanıcı adı alınmış." };
   }
   return { user: toAppUser(data.user), error: null };
 }
@@ -145,15 +145,15 @@ export async function signUp(supabase, username, password) {
 // Şifre değiştirme (giriş yapmış kullanıcı)
 // ---------------------------------------------------------------------------
 
-const WRONG_CREDENTIALS = "Kullanici adi veya sifre yanlis.";
+const WRONG_CREDENTIALS = "Kullanıcı adı veya şifre yanlış.";
 
 // Hata varsa Türkçe mesaj, yoksa null döner. again verilmezse eşleşme kontrolü atlanır.
 export function validatePasswordChange(current, next, again) {
-  if (!current) return "Mevcut sifreni yaz.";
+  if (!current) return "Mevcut şifreni yaz.";
   const perr = validatePassword(next);
-  if (perr) return perr.replace("Sifre", "Yeni sifre");
-  if (next === current) return "Yeni sifre mevcut sifreyle ayni olamaz.";
-  if (again !== undefined && next !== again) return "Yeni sifreler ayni degil.";
+  if (perr) return perr.replace("Şifre", "Yeni şifre");
+  if (next === current) return "Yeni şifre mevcut şifreyle aynı olamaz.";
+  if (again !== undefined && next !== again) return "Yeni şifreler aynı değil.";
   return null;
 }
 
@@ -162,19 +162,19 @@ export function passwordChangeErrorMessage(error) {
   const code = String((error && error.code) || "").toLowerCase();
   const status = error && error.status;
   if (code === "same_password" || msg.includes("different from the old")) {
-    return "Yeni sifre mevcut sifreyle ayni olamaz.";
+    return "Yeni şifre mevcut şifreyle aynı olamaz.";
   }
   if (code === "weak_password" || (msg.includes("password") && (msg.includes("weak") || msg.includes("least") || msg.includes("short")))) {
-    return "Yeni sifre cok zayif. Daha uzun veya daha karisik bir sifre sec.";
+    return "Yeni şifre çok zayıf. Daha uzun veya daha karışık bir şifre seç.";
   }
   if (status === 429 || code.includes("rate_limit") || msg.includes("rate limit") || msg.includes("too many")) {
-    return "Cok fazla deneme yapildi. Biraz bekleyip tekrar dene.";
+    return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.";
   }
   if (status === 401 || status === 403 || code.includes("session") || code === "not_authenticated" ||
       code === "reauthentication_needed" || msg.includes("jwt") || msg.includes("session")) {
-    return "Oturum suren dolmus. Cikis yapip tekrar giris yap, sonra yeniden dene.";
+    return "Oturum süren dolmuş. Çıkış yapıp tekrar giriş yap, sonra yeniden dene.";
   }
-  return withCode("Sifre degistirilemedi. Baglantini kontrol edip tekrar dene.", error);
+  return withCode("Şifre değiştirilemedi. Bağlantını kontrol edip tekrar dene.", error);
 }
 
 // Önce mevcut şifre, aynı hesapla yeniden giriş yapılarak doğrulanır (telefonu açık bırakan
@@ -188,7 +188,7 @@ export async function changePassword(supabase, username, current, next) {
   });
   if (signInError) {
     const m = authErrorMessage(signInError, "login");
-    return { error: m === WRONG_CREDENTIALS ? "Mevcut sifre yanlis." : m };
+    return { error: m === WRONG_CREDENTIALS ? "Mevcut şifre yanlış." : m };
   }
   const { error } = await supabase.auth.updateUser({ password: next });
   if (error) return { error: passwordChangeErrorMessage(error) };

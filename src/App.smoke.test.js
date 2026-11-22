@@ -91,7 +91,7 @@ function typeInto(el, value) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
-async function rateFirstCard(container, label = "Ogrendim") {
+async function rateFirstCard(container, label = "Öğrendim") {
   await act(async () => { byText(container, "Flashcard").click(); });
   await flush();
   const cardEl = [...container.querySelectorAll("div")].find((d) => d.style.cursor === "pointer");
@@ -146,7 +146,7 @@ test("giriş: doğru e-posta ile Auth çağrılır, başarılı olunca ana sayfa
   await flush();
   const [u, p] = container.querySelectorAll("input");
   await act(async () => { typeInto(u, "Ali"); typeInto(p, "secret1"); });
-  const submit = buttons(container).filter((b) => b.textContent.includes("Giris Yap")).pop();
+  const submit = buttons(container).filter((b) => b.textContent.includes("Giriş Yap")).pop();
   await act(async () => { submit.click(); });
   await flush();
   expect(mockState.lastSignIn).toEqual({ email: "ali@linguaai.app", password: "secret1" });
@@ -160,9 +160,9 @@ test("giriş: yanlış şifre tek tip hata gösterir ve ana sayfaya geçmez", as
   await flush();
   const [u, p] = container.querySelectorAll("input");
   await act(async () => { typeInto(u, "ali"); typeInto(p, "yanlis1"); });
-  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Giris Yap")).pop().click(); });
+  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Giriş Yap")).pop().click(); });
   await flush();
-  expect(textOf(container)).toContain("Kullanici adi veya sifre yanlis.");
+  expect(textOf(container)).toContain("Kullanıcı adı veya şifre yanlış.");
   expect(textOf(container)).not.toContain("Merhaba");
 });
 
@@ -173,14 +173,14 @@ test("kayıt: geçersiz kullanıcı adı ağa çıkmadan reddedilir, geçerli ol
   };
   await act(async () => { root.render(<App />); });
   await flush();
-  await act(async () => { byText(container, "Kayit Ol").click(); });
+  await act(async () => { byText(container, "Kayıt Ol").click(); });
   const [u, p] = container.querySelectorAll("input");
   await act(async () => { typeInto(u, "veli yilmaz"); typeInto(p, "secret1"); });
-  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Kayit Ol")).pop().click(); });
-  expect(textOf(container)).toContain("sadece kucuk harf");
+  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Kayıt Ol")).pop().click(); });
+  expect(textOf(container)).toContain("sadece küçük harf");
   expect(mockState.lastSignUp).toBeNull();
   await act(async () => { typeInto(u, "veli"); });
-  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Kayit Ol")).pop().click(); });
+  await act(async () => { buttons(container).filter((b) => b.textContent.includes("Kayıt Ol")).pop().click(); });
   await flush();
   expect(mockState.lastSignUp.email).toBe("veli@linguaai.app");
   expect(textOf(container)).toContain("Merhaba, veli!");
@@ -191,7 +191,7 @@ test("çıkış: bekleyen ilerleme önce gönderilir, sonra oturum kapanır", as
   await flush();
   mockState.events.length = 0;
   await rateFirstCard(container);          // 700 ms'lik bekleyen kayıt oluşur
-  await act(async () => { byText(container, "Cikis").click(); });
+  await act(async () => { byText(container, "Çıkış").click(); });
   await flush();
   expect(mockState.events).toEqual(["upsert", "signOut"]);
   expect(textOf(container)).toContain("KULLANICI ADI");
@@ -222,7 +222,7 @@ test("yükleme başarısızsa uyarı çıkar ve sunucudaki veri boş ilerlemeyle
   mockState.loadError = { message: "network" };
   await act(async () => { root.render(<App />); });
   await flush();
-  expect(textOf(container)).toContain("Ilerlemen yuklenemedi");
+  expect(textOf(container)).toContain("İlerlemen yüklenemedi");
   mockState.events.length = 0;
   await rateFirstCard(container);
   await sleep(900);
@@ -230,7 +230,7 @@ test("yükleme başarısızsa uyarı çıkar ve sunucudaki veri boş ilerlemeyle
   mockState.loadError = null;
   await act(async () => { byText(container, "Tekrar dene").click(); });
   await flush();
-  expect(textOf(container)).not.toContain("yuklenemedi");
+  expect(textOf(container)).not.toContain("yüklenemedi");
 });
 
 test("kayıt başarısızsa uyarı çıkar, tekrar denenince kalkar", async () => {
@@ -239,7 +239,7 @@ test("kayıt başarısızsa uyarı çıkar, tekrar denenince kalkar", async () =
   mockState.saveError = { message: "offline" };
   await rateFirstCard(container);
   await sleep(900);
-  expect(textOf(container)).toContain("Ilerleme kaydedilemedi");
+  expect(textOf(container)).toContain("İlerleme kaydedilemedi");
   mockState.saveError = null;
   await act(async () => { byText(container, "Tekrar dene").click(); });
   await flush();
@@ -310,7 +310,7 @@ test("Flashcard: kart çevrilip Öğrendim denince SRS kaydı sunucuya yazılır
   expect(textOf(container)).toMatch(/1 ?\/ ?15/);
   const cardEl = [...container.querySelectorAll("div")].find((d) => d.style.cursor === "pointer");
   await act(async () => { cardEl.click(); });
-  const learnedBtn = byText(container, "Ogrendim");
+  const learnedBtn = byText(container, "Öğrendim");
   expect(learnedBtn).toBeDefined();
   await act(async () => { learnedBtn.click(); });
   await sleep(900); // 700 ms birleştirme süresi
@@ -332,11 +332,79 @@ test("Rusça seçilince Rusça listesi yüklenir", async () => {
   expect(textOf(container)).toContain("240"); // L1 kelime sayısı
 });
 
+// ---------- UX ----------
+
+test("alt sekme çubuğu: İlerleme sekmesine geçilir, Flashcard'da gizlenir", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const tabs = container.querySelector('nav[aria-label="Ana menü"]');
+  expect(tabs).not.toBeNull();
+  await act(async () => { byText(tabs, "İlerleme").click(); });
+  expect(byText(tabs, "İlerleme").getAttribute("aria-current")).toBe("page");
+  await act(async () => { byText(container, "Ana").click(); });
+  await act(async () => { byText(container, "Flashcard").click(); });
+  await flush();
+  expect(container.querySelector('nav[aria-label="Ana menü"]')).toBeNull();
+});
+
+test("puan butonlarında sonraki tekrar süresi görünür", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  await act(async () => { byText(container, "Flashcard").click(); });
+  await flush();
+  const cardEl = [...container.querySelectorAll("div")].find((d) => d.style.cursor === "pointer");
+  await act(async () => { cardEl.click(); });
+  expect(byText(container, "Öğrendim").textContent).toContain("7 gün");
+  expect(byText(container, "Tamam").textContent).toContain("yarın");
+});
+
+test("İlerlemeyi Sıfırla iki adımlı: Vazgeç silmez, Evet siler", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  await act(async () => { byText(container, "İlerleme").click(); });
+  const before = mockState.upserts.length;
+  await act(async () => { byText(container, "İlerlemeyi Sıfırla").click(); });
+  expect(textOf(container)).toContain("Emin misin?");
+  expect(mockState.upserts.length).toBe(before);
+  await act(async () => { byText(container, "Vazgeç").click(); });
+  expect(textOf(container)).not.toContain("Emin misin?");
+  await act(async () => { byText(container, "İlerlemeyi Sıfırla").click(); });
+  await act(async () => { byText(container, "Evet, sıfırla").click(); });
+  await sleep(900);
+  expect(mockState.upserts.length).toBeGreaterThan(before);
+  expect(mockState.upserts[mockState.upserts.length - 1].learned).toEqual({});
+});
+
+test("seçilen dil cihazda hatırlanır", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const ruBtn = buttons(container).find((b) => /Rus/.test(b.textContent) && b.textContent.length < 20);
+  await act(async () => { ruBtn.click(); });
+  await flush();
+  expect(localStorage.getItem("lingua_pref_lang")).toBe("ru");
+  act(() => root.unmount());
+  root = createRoot(container);
+  await act(async () => { root.render(<App />); });
+  await flush();
+  expect(textOf(container)).toContain("240");
+});
+
+test("klavye: Boşluk kartı çevirir, 2 puanlar", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  await act(async () => { byText(container, "Flashcard").click(); });
+  await flush();
+  await act(async () => { document.body.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true })); });
+  expect(byText(container, "Öğrendim")).toBeDefined();
+  await act(async () => { document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "2", bubbles: true })); });
+  expect(textOf(container)).toMatch(/2 ?\/ ?15/);
+});
+
 // ---------- Şifre değiştirme ----------
 
 async function openChangePassword(container) {
-  await act(async () => { byText(container, "Ilerleme").click(); });
-  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  await act(async () => { byText(container, "İlerleme").click(); });
+  await act(async () => { byText(container, "Şifre Değiştir").click(); });
   const inputs = container.querySelectorAll('input[type="password"]');
   expect(inputs).toHaveLength(3);
   return inputs;
@@ -345,11 +413,11 @@ async function openChangePassword(container) {
 test("şifre değiştir: İlerleme ekranında hesap bölümü görünür, form açılır", async () => {
   await act(async () => { root.render(<App />); });
   await flush();
-  await act(async () => { byText(container, "Ilerleme").click(); });
+  await act(async () => { byText(container, "İlerleme").click(); });
   expect(textOf(container)).toContain("HESAP");
   expect(textOf(container)).toContain("test");
   expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
-  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  await act(async () => { byText(container, "Şifre Değiştir").click(); });
   expect(container.querySelectorAll('input[type="password"]')).toHaveLength(3);
 });
 
@@ -359,11 +427,11 @@ test("şifre değiştir: başarılı akış eski şifreyi doğrular, yenisini ka
   await flush();
   const [cur, next, again] = await openChangePassword(container);
   await act(async () => { typeInto(cur, "eski123"); typeInto(next, "yeni123"); typeInto(again, "yeni123"); });
-  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
+  await act(async () => { byText(container, "Şifreyi Güncelle").click(); });
   await flush();
   expect(mockState.lastSignIn).toEqual({ email: "test@linguaai.app", password: "eski123" });
   expect(mockState.lastUpdateUser).toEqual({ password: "yeni123" });
-  expect(textOf(container)).toContain("Sifren degistirildi");
+  expect(textOf(container)).toContain("Şifren değiştirildi");
   expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
 });
 
@@ -372,8 +440,8 @@ test("şifre değiştir: tekrar eşleşmezse ağa çıkılmaz", async () => {
   await flush();
   const [cur, next, again] = await openChangePassword(container);
   await act(async () => { typeInto(cur, "eski123"); typeInto(next, "yeni123"); typeInto(again, "yeni124"); });
-  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
-  expect(textOf(container)).toContain("Yeni sifreler ayni degil");
+  await act(async () => { byText(container, "Şifreyi Güncelle").click(); });
+  expect(textOf(container)).toContain("Yeni şifreler aynı değil");
   expect(mockState.lastSignIn).toBeNull();
   expect(mockState.lastUpdateUser).toBeNull();
 });
@@ -384,9 +452,9 @@ test("şifre değiştir: mevcut şifre yanlışsa yeni şifre kaydedilmez ve for
   await flush();
   const [cur, next, again] = await openChangePassword(container);
   await act(async () => { typeInto(cur, "yanlis1"); typeInto(next, "yeni123"); typeInto(again, "yeni123"); });
-  await act(async () => { byText(container, "Sifreyi Guncelle").click(); });
+  await act(async () => { byText(container, "Şifreyi Güncelle").click(); });
   await flush();
-  expect(textOf(container)).toContain("Mevcut sifre yanlis.");
+  expect(textOf(container)).toContain("Mevcut şifre yanlış.");
   expect(mockState.lastUpdateUser).toBeNull();
   expect(container.querySelectorAll('input[type="password"]')).toHaveLength(3);
 });
@@ -396,8 +464,8 @@ test("şifre değiştir: Vazgeç formu kapatır ve alanları temizler", async ()
   await flush();
   const [cur] = await openChangePassword(container);
   await act(async () => { typeInto(cur, "bir seyler"); });
-  await act(async () => { byText(container, "Vazgec").click(); });
+  await act(async () => { byText(container, "Vazgeç").click(); });
   expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0);
-  await act(async () => { byText(container, "Sifre Degistir").click(); });
+  await act(async () => { byText(container, "Şifre Değiştir").click(); });
   expect(container.querySelectorAll('input[type="password"]')[0].value).toBe("");
 });
