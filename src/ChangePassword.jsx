@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { changePassword, validatePasswordChange } from "./auth";
 
-// "Ilerleme" ekranındaki hesap bölümü: giriş yapmış kullanıcı kendi şifresini değiştirir.
+// "İlerleme" ekranındaki hesap bölümü: giriş yapmış kullanıcı kendi şifresini değiştirir.
 // S: App'in ortak stil nesnesi (card, inp, btn).
 export default function ChangePassword({ supabase, username, S }) {
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export default function ChangePassword({ supabase, username, S }) {
     setBusy(false);
     if (r.error) { setMsg({ ok: false, text: r.error }); return; }
     reset(); setOpen(false);
-    setMsg({ ok: true, text: "Sifren degistirildi. Bundan sonra yeni sifrenle giris yap." });
+    setMsg({ ok: true, text: "Şifren değiştirildi. Bundan sonra yeni şifrenle giriş yap." });
   };
 
   const label = { fontSize: 12, color: "rgba(232,228,217,0.45)", marginBottom: 6 };
@@ -36,27 +36,27 @@ export default function ChangePassword({ supabase, username, S }) {
           <div style={{ fontSize: 15, color: "#e8e4d9" }}>{username}</div>
         </div>
         {!open && (
-          <button onClick={() => { setOpen(true); setMsg(null); }} style={S.btn(false)}>Sifre Degistir</button>
+          <button onClick={() => { setOpen(true); setMsg(null); }} style={S.btn(false)}>Şifre Değiştir</button>
         )}
       </div>
 
       {open && (
         <div style={{ marginTop: 16 }}>
-          <div style={label}>MEVCUT SIFRE</div>
+          <div style={label}>MEVCUT ŞİFRE</div>
           <input style={S.inp} type="password" value={cur} autoComplete="current-password"
             onChange={(e) => setCur(e.target.value)} onKeyDown={onEnter} />
-          <div style={{ ...label, marginTop: 12 }}>YENI SIFRE (en az 6 karakter)</div>
+          <div style={{ ...label, marginTop: 12 }}>YENİ ŞİFRE (en az 6 karakter)</div>
           <input style={S.inp} type="password" value={next} autoComplete="new-password"
             onChange={(e) => setNext(e.target.value)} onKeyDown={onEnter} />
-          <div style={{ ...label, marginTop: 12 }}>YENI SIFRE (tekrar)</div>
+          <div style={{ ...label, marginTop: 12 }}>YENİ ŞİFRE (tekrar)</div>
           <input style={S.inp} type="password" value={again} autoComplete="new-password"
             onChange={(e) => setAgain(e.target.value)} onKeyDown={onEnter} />
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             <button onClick={submit} disabled={busy}
               style={{ ...S.btn(true), flex: 1, padding: "12px 16px", opacity: busy ? 0.6 : 1 }}>
-              {busy ? "Bekleyin..." : "Sifreyi Guncelle"}
+              {busy ? "Bekleyin..." : "Şifreyi Güncelle"}
             </button>
-            <button onClick={() => { setOpen(false); reset(); setMsg(null); }} disabled={busy} style={S.btn(false)}>Vazgec</button>
+            <button onClick={() => { setOpen(false); reset(); setMsg(null); }} disabled={busy} style={S.btn(false)}>Vazgeç</button>
           </div>
         </div>
       )}

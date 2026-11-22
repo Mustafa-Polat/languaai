@@ -5,6 +5,7 @@ import ChangePassword from "./ChangePassword";
 import { DE_LIBRARY, DE_MODULES } from "./german";
 import {
   shuffle, cardKey, rateCard, demoteCard, buildDeck, deckStats, pickQuizCard, prepareProgress, MIGRATED_KEY,
+  previewDays, formatDays,
 } from "./srs";
 import { loadLibrary, allCards, levelCount, totalCount } from "./libraries";
 import { signIn, signUp, toAppUser } from "./auth";
@@ -34,6 +35,20 @@ function makeQuiz(word, turkish, allWords) {
   return { word, opts, correct: opts.indexOf(turkish) };
 }
 
+// Cihaza özgü tercihler (son seçilen dil ve seviyeler); localStorage kullanılamazsa varsayılanlar
+const PREF_PREFIX = "lingua_pref_";
+function readPref(key, allowed, fallback) {
+  try {
+    const v = localStorage.getItem(PREF_PREFIX + key);
+    return allowed.includes(v) ? v : fallback;
+  } catch { return fallback; }
+}
+function writePref(key, value) {
+  try { localStorage.setItem(PREF_PREFIX + key, value); } catch {}
+}
+
+const TABS = [["home", "🏠", "Ana"], ["library", "📖", "Liste"], ["stats", "📊", "İlerleme"]];
+
 const emptyProgress = () => ({ learned: {}, qCorrect: 0, qTotal: 0 });
 
 
@@ -48,10 +63,11 @@ export default function App() {
   const [saveErr, setSaveErr] = useState(false);
   const [loadErr, setLoadErr] = useState(false);
   const [screen, setScreen] = useState("home");
-  const [lang, setLang] = useState("en"); // "en" | "ru" | "de"
-  const [level, setLevel] = useState("A1");
-  const [ruLevel, setRuLevel] = useState("L1");
-  const [deLevel, setDeLevel] = useState("M1");
+  const [lang, setLang] = useState(() => readPref("lang", ["en", "ru", "de"], "en")); // "en" | "ru" | "de"
+  const [level, setLevel] = useState(() => readPref("level", LEVELS, "A1"));
+  const [ruLevel, setRuLevel] = useState(() => readPref("ruLevel", ["L1", "L2", "L3", "L4", "L5"], "L1"));
+  const [deLevel, setDeLevel] = useState(() => readPref("deLevel", DE_MODULES.map(m => m.id), "M1"));
+  const [confirmReset, setConfirmReset] = useState(false);
   const [prog, setProg] = useState(emptyProgress());
   const [deck, setDeck] = useState([]);
   const [cardIdx, setCardIdx] = useState(0);
@@ -273,7 +289,32 @@ export default function App() {
     saveProg(np);
   }, [sel, quiz, saveProg]);
 
-  const nav = (s) => { setScreen(s); setFlipped(false); };
+  // Son seçilen dil ve seviyeler cihazda hatırlanır
+  useEffect(() => {
+    writePref("lang", lang); writePref("level", level);
+    writePref("ruLevel", ruLevel); writePref("deLevel", deLevel);
+  }, [lang, level, ruLevel, deLevel]);
+
+  // Masaüstü klavye kısayolları: Boşluk/Enter çevirir, 1-2-3 puanlar; quizde 1-4 seçer, Enter sonraki soru
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.isContentEditable)) return;
+      if (screen === "flashcard" && deck.length > 0 && !done) {
+        if (e.key === " " || e.key === "Enter") { e.preventDefault(); setFlipped(f => !f); }
+        else if (flipped && ["1", "2", "3"].includes(e.key)) nextCard(["hard", "ok", "learned"][Number(e.key) - 1]);
+      } else if (screen === "quiz" && quiz) {
+        if (sel === null && ["1", "2", "3", "4"].includes(e.key)) {
+          if (Number(e.key) <= quiz.opts.length) submitQuiz(Number(e.key) - 1);
+        } else if (sel !== null && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); nextQuiz(); }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [screen, deck, done, flipped, quiz, sel, nextCard, submitQuiz, nextQuiz]);
+
+  const nav = (s) => { setScreen(s); setFlipped(false); setConfirmReset(false); };
 
   const speak = useCallback((word, wordLang) => {
     if (!window.speechSynthesis) return;
@@ -343,9 +384,13 @@ export default function App() {
     btn: (a) => ({ background: a ? "#ffd95a" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 10, color: a ? "#0a0a0f" : "#e8e4d9", padding: "10px 16px", fontSize: 13, fontWeight: a ? "bold" : "normal", cursor: "pointer", fontFamily: "inherit" }),
   };
 
+  const showTabs = screen !== "flashcard" && screen !== "quiz"; // çalışma ekranlarında dikkat dağıtmasın
+  const finePointer = typeof window !== "undefined" && !!window.matchMedia &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches; // klavye ipuçları yalnızca masaüstünde
+
   if (!authReady) return (
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "rgba(232,228,217,0.4)", fontSize: 14 }}>Yukleniyor...</div>
+      <div style={{ color: "rgba(232,228,217,0.4)", fontSize: 14 }}>Yükleniyor...</div>
     </div>
   );
 
@@ -355,7 +400,7 @@ export default function App() {
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontSize: 50, marginBottom: 8 }}>&#128218;</div>
           <h1 style={{ fontSize: 28, fontWeight: "bold", color: "#ffd95a", letterSpacing: 2, margin: 0 }}>LINGUA</h1>
-          <p style={{ color: "rgba(232,228,217,0.4)", fontSize: 13, margin: "6px 0 0" }}>Oxford 3000 - 2725 Kelime</p>
+          <p style={{ color: "rgba(232,228,217,0.4)", fontSize: 13, margin: "6px 0 0" }}>{totalCount("en") + totalCount("ru") + totalCount("de")} kelime · İngilizce, Rusça, Almanca</p>
         </div>
         <div style={{ display: "flex", marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 4 }}>
           {["login","register"].map(t => (
@@ -364,7 +409,7 @@ export default function App() {
               borderRadius: 8, color: authTab === t ? "#0a0a0f" : "rgba(232,228,217,0.5)",
               padding: "10px", fontSize: 14, fontWeight: authTab === t ? "bold" : "normal",
               cursor: "pointer", fontFamily: "inherit",
-            }}>{t === "login" ? "Giris Yap" : "Kayit Ol"}</button>
+            }}>{t === "login" ? "Giriş Yap" : "Kayıt Ol"}</button>
           ))}
         </div>
         <div style={{ ...S.card, padding: "28px 24px" }}>
@@ -373,20 +418,20 @@ export default function App() {
             autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
             onKeyDown={e => e.key === "Enter" && (authTab === "login" ? doLogin() : doRegister())} />
-          <div style={{ fontSize: 12, color: "rgba(232,228,217,0.45)", marginBottom: 6 }}>SIFRE</div>
-          <input style={S.inp} type="password" placeholder="sifre" value={form.password}
+          <div style={{ fontSize: 12, color: "rgba(232,228,217,0.45)", marginBottom: 6 }}>ŞİFRE</div>
+          <input style={S.inp} type="password" placeholder="şifre" value={form.password}
             autoComplete={authTab === "login" ? "current-password" : "new-password"}
             onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
             onKeyDown={e => e.key === "Enter" && (authTab === "login" ? doLogin() : doRegister())} />
           {authTab === "register" && (
             <div style={{ fontSize: 11, color: "rgba(232,228,217,0.35)", marginBottom: 12, lineHeight: 1.5 }}>
-              Kullanici adi: kucuk harf, rakam, nokta, alt cizgi, tire (en az 3). Sifre en az 6 karakter.
+              Kullanıcı adı: küçük harf, rakam, nokta, alt çizgi, tire (en az 3). Şifre en az 6 karakter.
             </div>
           )}
           {authErr && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#f87171", marginBottom: 14 }}>{authErr}</div>}
           <button onClick={authTab === "login" ? doLogin : doRegister} disabled={authBusy}
             style={{ width: "100%", background: "#ffd95a", border: "none", borderRadius: 10, color: "#0a0a0f", padding: "14px", fontSize: 15, fontWeight: "bold", cursor: authBusy ? "default" : "pointer", fontFamily: "inherit", opacity: authBusy ? 0.6 : 1 }}>
-            {authBusy ? "Bekleyin..." : authTab === "login" ? "Giris Yap" : "Kayit Ol"}
+            {authBusy ? "Bekleyin..." : authTab === "login" ? "Giriş Yap" : "Kayıt Ol"}
           </button>
         </div>
       </div>
@@ -395,26 +440,23 @@ export default function App() {
 
   return (
     <div style={S.page}>
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(10,10,15,0.96)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,217,90,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(10,10,15,0.96)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,217,90,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 18px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <span style={{ fontSize: 18 }}>&#128218;</span>
           <span style={{ fontSize: 15, fontWeight: "bold", color: "#ffd95a", letterSpacing: 2 }}>LINGUA</span>
         </div>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          {[["home","Ana"],["library","Liste"],["stats","Ilerleme"]].map(([s, label]) => (
-            <button key={s} onClick={() => nav(s)} style={{ background: screen === s ? "rgba(255,217,90,0.12)" : "transparent", border: screen === s ? "1px solid rgba(255,217,90,0.35)" : "1px solid transparent", borderRadius: 8, color: screen === s ? "#ffd95a" : "rgba(232,228,217,0.45)", padding: "7px 10px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>{label}</button>
-          ))}
-          <span style={{ fontSize: 12, color: "rgba(232,228,217,0.4)", marginLeft: 8 }}>{user.username}</span>
-          <button onClick={logout} style={{ background: "transparent", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 6, color: "#f87171", padding: "5px 8px", fontSize: 11, cursor: "pointer", fontFamily: "inherit", marginLeft: 4 }}>Cikis</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <span title={user.username} style={{ fontSize: 12, color: "rgba(232,228,217,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{user.username}</span>
+          <button onClick={logout} aria-label="Çıkış yap" style={{ flexShrink: 0, background: "transparent", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, color: "#f87171", padding: "6px 10px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Çıkış</button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 660, margin: "0 auto", padding: "28px 18px" }}>
+      <div style={{ maxWidth: 660, margin: "0 auto", padding: showTabs ? "28px 18px calc(92px + env(safe-area-inset-bottom))" : "28px 18px 40px" }}>
         {(loadErr || saveErr) && (
           <div role="alert" style={{ ...S.card, border: "1px solid rgba(248,113,113,0.35)", color: "#f87171", marginBottom: 16, fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <span>{loadErr
-              ? "Ilerlemen yuklenemedi. Yuklenene kadar yeni ilerleme kaydedilmez."
-              : "Ilerleme kaydedilemedi. Baglantini kontrol et."}</span>
+              ? "İlerlemen yüklenemedi. Yuklenene kadar yeni ilerleme kaydedilmez."
+              : "İlerleme kaydedilemedi. Bağlantını kontrol et."}</span>
             <button onClick={() => (loadErr ? loadProg(user.id) : pushProg(progRef.current, user.id))} style={S.btn(false)}>Tekrar dene</button>
           </div>
         )}
@@ -423,7 +465,7 @@ export default function App() {
           <div>
             {libErr && (
               <div style={{ ...S.card, border: "1px solid rgba(248,113,113,0.35)", color: "#f87171", marginBottom: 16, fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                <span>Kelime listesi yuklenemedi. Baglantini kontrol et.</span>
+                <span>Kelime listesi yüklenemedi. Bağlantını kontrol et.</span>
                 <button onClick={() => ensureLib(lang)} style={S.btn(false)}>Tekrar dene</button>
               </div>
             )}
@@ -521,7 +563,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
               <button onClick={() => nav("home")} style={S.btn(false)}>Geri</button>
-              <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{done ? "Tamamlandi!" : (cardIdx + 1) + " / " + deck.length}</span>
+              <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{done ? "Tamamlandı!" : (cardIdx + 1) + " / " + deck.length}</span>
               <button onClick={startCards} style={{ ...S.btn(false), color: "#ffd95a" }}>Yeni</button>
             </div>
             <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 4, marginBottom: 22 }}>
@@ -530,11 +572,11 @@ export default function App() {
             {done ? (
               <div style={{ textAlign: "center", padding: "60px 20px" }}>
                 <div style={{ fontSize: 60, marginBottom: 14 }}>&#127881;</div>
-                <h2 style={{ color: "#ffd95a", marginBottom: 8 }}>Seri Tamamlandi!</h2>
+                <h2 style={{ color: "#ffd95a", marginBottom: 8 }}>Seri Tamamlandı!</h2>
                 <p style={{ color: "rgba(232,228,217,0.45)", marginBottom: 28 }}>{deck.length} kelimeyi gozden gecirdin.</p>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
                   <button onClick={startCards} style={{ background: "#ffd95a", border: "none", borderRadius: 12, color: "#0a0a0f", padding: "14px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit" }}>Yeni Seri</button>
-                  <button onClick={startQuiz} style={{ ...S.card, border: "1px solid rgba(96,165,250,0.4)", color: "#60a5fa", padding: "14px 24px", fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Quiz Coz</button>
+                  <button onClick={startQuiz} style={{ ...S.card, border: "1px solid rgba(96,165,250,0.4)", color: "#60a5fa", padding: "14px 24px", fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Quiz Çöz</button>
                 </div>
               </div>
             ) : deck[cardIdx] ? (
@@ -547,11 +589,11 @@ export default function App() {
                         <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
                         <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word, lang); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
-                      <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Cevir / Geri Don</div>
+                      <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Çevir / Geri Dön</div>
                     </div>
                   ) : (
                     <div style={{ width: "100%" }}>
-                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Turkce</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Türkçe</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 18 }}>
                         <div style={{ fontSize: 32, fontWeight: "bold" }}>{deck[cardIdx].turkish}</div>
                         <button onClick={() => speak(deck[cardIdx].word, lang)} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
@@ -564,9 +606,17 @@ export default function App() {
                 </div>
                 {flipped && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                    {[["Zor","hard","#f87171","rgba(248,113,113,0.1)"],["Tamam","ok","#fbbf24","rgba(251,191,36,0.1)"],["Ogrendim","learned","#34d399","rgba(52,211,153,0.1)"]].map(([label, val, color, bg]) => (
-                      <button key={val} onClick={() => nextCard(val)} style={{ background: bg, border: "1px solid " + color + "40", borderRadius: 12, color, padding: "14px 8px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>{label}</button>
+                    {[["Zor","hard","#f87171","rgba(248,113,113,0.1)"],["Tamam","ok","#fbbf24","rgba(251,191,36,0.1)"],["Öğrendim","learned","#34d399","rgba(52,211,153,0.1)"]].map(([label, val, color, bg]) => (
+                      <button key={val} onClick={() => nextCard(val)} style={{ background: bg, border: "1px solid " + color + "40", borderRadius: 12, color, padding: "12px 8px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                        <span>{label}</span>
+                        <span style={{ fontSize: 10, opacity: 0.65 }}>{formatDays(previewDays(prog, deck[cardIdx], val))}</span>
+                      </button>
                     ))}
+                  </div>
+                )}
+                {finePointer && (
+                  <div style={{ textAlign: "center", fontSize: 11, color: "rgba(232,228,217,0.3)", marginTop: 12 }}>
+                    {flipped ? "1 Zor · 2 Tamam · 3 Öğrendim · Boşluk: çevir" : "Boşluk: kartı çevir"}
                   </div>
                 )}
               </div>
@@ -609,10 +659,15 @@ export default function App() {
                     );
                   })}
                 </div>
+                {finePointer && (
+                  <div style={{ textAlign: "center", fontSize: 11, color: "rgba(232,228,217,0.3)", marginBottom: 12 }}>
+                    {sel === null ? "1–4: şık seç" : "Enter: sonraki soru"}
+                  </div>
+                )}
                 {sel !== null && (
                   <div>
                     <div style={{ background: correct ? "rgba(52,211,153,0.07)" : "rgba(248,113,113,0.07)", border: "1px solid " + (correct ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.3)"), borderRadius: 14, padding: "14px 18px", marginBottom: 14, fontSize: 14, color: correct ? "#34d399" : "#f87171", fontWeight: "bold" }}>
-                      {correct ? "Dogru!" : "Yanlis - Dogru: " + quiz.opts[quiz.correct]}
+                      {correct ? "Doğru!" : "Yanlış - Doğru: " + quiz.opts[quiz.correct]}
                     </div>
                     <button onClick={nextQuiz} style={{ background: "#60a5fa", border: "none", borderRadius: 14, color: "#fff", padding: "16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", width: "100%" }}>Sonraki Soru</button>
                   </div>
@@ -688,9 +743,9 @@ export default function App() {
 
         {screen === "stats" && (
           <div>
-            <h2 style={{ margin: "0 0 22px", fontSize: 20, color: "#ffd95a" }}>{user.username} - Ilerleme</h2>
+            <h2 style={{ margin: "0 0 22px", fontSize: 20, color: "#ffd95a" }}>{user.username} - İlerleme</h2>
             <div style={{ display: "grid", gap: 12 }}>
-              {[["&#11088;","Ogrenilen Kelime", learned,"#ffd95a"],["&#127919;","Dogruluk", acc + "%","#60a5fa"],["&#129504;","Toplam Quiz", prog.qTotal,"#a78bfa"],["Dogru","Dogru Cevap", prog.qCorrect,"#34d399"],["&#128260;","Bugun Tekrar Bekleyen", totalDue,"#f59e0b"]].map(([icon, label, val, color]) => (
+              {[["&#11088;","Öğrenilen Kelime", learned,"#ffd95a"],["&#127919;","Doğruluk", acc + "%","#60a5fa"],["&#129504;","Toplam Quiz", prog.qTotal,"#a78bfa"],["&#9989;","Doğru Cevap", prog.qCorrect,"#34d399"],["&#128260;","Bugün Tekrar Bekleyen", totalDue,"#f59e0b"]].map(([icon, label, val, color]) => (
                 <div key={label} style={{ ...S.card, display: "flex", alignItems: "center", gap: 18 }}>
                   <div style={{ fontSize: 30 }} dangerouslySetInnerHTML={{ __html: icon }} />
                   <div>
@@ -702,7 +757,7 @@ export default function App() {
               {prog.qTotal > 0 && (
                 <div style={S.card}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: "rgba(232,228,217,0.45)" }}>Genel Dogruluk</span>
+                    <span style={{ fontSize: 13, color: "rgba(232,228,217,0.45)" }}>Genel Doğruluk</span>
                     <span style={{ fontWeight: "bold", color: acc >= 70 ? "#34d399" : "#fbbf24" }}>{acc}%</span>
                   </div>
                   <div style={{ height: 6, background: "rgba(255,255,255,0.07)", borderRadius: 6 }}>
@@ -727,14 +782,43 @@ export default function App() {
                 );
               })}
               <ChangePassword supabase={supabase} username={user.username} S={S} />
-              <button onClick={() => saveProg(emptyProgress())} style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 12, color: "#f87171", padding: "14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                Ilerlemeyi Sifirla
-              </button>
+              {!confirmReset ? (
+                <button onClick={() => setConfirmReset(true)} style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 12, color: "#f87171", padding: "14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  İlerlemeyi Sıfırla
+                </button>
+              ) : (
+                <div role="alert" style={{ ...S.card, border: "1px solid rgba(248,113,113,0.35)" }}>
+                  <div style={{ fontSize: 14, color: "#f87171", marginBottom: 12, lineHeight: 1.5 }}>
+                    Tüm dillerdeki ilerlemen silinecek. Bu işlem geri alınamaz. Emin misin?
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => { saveProg(emptyProgress()); setConfirmReset(false); }} style={{ flex: 1, background: "#f87171", border: "none", borderRadius: 10, color: "#0a0a0f", padding: "12px", fontSize: 13, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit" }}>Evet, sıfırla</button>
+                    <button onClick={() => setConfirmReset(false)} style={S.btn(false)}>Vazgeç</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
       </div>
+
+      {showTabs && (
+        <nav aria-label="Ana menü" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(10,10,15,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,217,90,0.12)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+          <div style={{ maxWidth: 660, margin: "0 auto", display: "flex" }}>
+            {TABS.map(([s, icon, label]) => {
+              const active = screen === s || (s === "home" && screen === "german");
+              return (
+                <button key={s} onClick={() => nav(s)} aria-current={active ? "page" : undefined}
+                  style={{ flex: 1, background: "transparent", border: "none", padding: "9px 4px 8px", cursor: "pointer", fontFamily: "inherit", color: active ? "#ffd95a" : "rgba(232,228,217,0.45)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+                  <span style={{ fontSize: 11, fontWeight: active ? "bold" : "normal" }}>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
