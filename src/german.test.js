@@ -53,13 +53,19 @@ test("bir modülde aynı kelime iki kez bulunmaz (kütüphane anahtarı çakış
   }
 });
 
-test("M6 kelimeleri önceki modüllerde tekrar etmez", () => {
-  const before = new Set(DE_MODULES.filter((m) => m.id !== "M6").flatMap((m) => m.lessons.flatMap((l) => l.vocab.map(wordKey))));
-  const m6 = DE_MODULES.find((m) => m.id === "M6").lessons.flatMap((l) => l.vocab.map(wordKey));
-  expect(m6.filter((k) => before.has(k))).toEqual([]);
+test("M6 ve sonraki modüller önceki modüllerdeki kelimeleri tekrar etmez", () => {
+  const seen = new Set();
+  const dups = [];
+  for (const m of DE_MODULES) {
+    const keys = m.lessons.flatMap((l) => l.vocab.map(wordKey));
+    if (Number(m.id.slice(1)) >= 6) dups.push(...keys.filter((k) => seen.has(k)).map((k) => m.id + ": " + k));
+    keys.forEach((k) => seen.add(k));
+  }
+  expect(dups).toEqual([]);
 });
 
 test("kütüphane ve alıştırma üretici M6 için çalışır", () => {
   expect(DE_LIBRARY.M6.length).toBeGreaterThan(40);
+  expect(DE_LIBRARY.M7.length).toBeGreaterThan(60);
   for (const { l } of lessons) expect(buildPractice(l).length).toBeGreaterThan(5);
 });
