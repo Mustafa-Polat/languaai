@@ -523,10 +523,10 @@ export default function App() {
                   ))}
                 </div>
               ) : lang === "de" ? (
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {DE_MODULES.map((m, i) => (
-                    <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1, padding: "12px 0", fontSize: 13 }}>
-                      Modül {i + 1}<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
+                    <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1, minWidth: 52, padding: "12px 0", fontSize: 13 }}>
+                      M{i + 1}<div style={{ fontSize: 10, opacity: 0.6, marginTop: 2 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
                     </button>
                   ))}
                 </div>
@@ -717,10 +717,10 @@ export default function App() {
                 ))}
               </div>
             ) : lang === "de" ? (
-              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                 {DE_MODULES.map((m, i) => (
-                  <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1 }}>
-                    Modül {i + 1}<div style={{ fontSize: 10, opacity: 0.6 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
+                  <button key={m.id} onClick={() => setDeLevel(m.id)} style={{ ...S.btn(deLevel === m.id), flex: 1, minWidth: 52 }}>
+                    M{i + 1}<div style={{ fontSize: 10, opacity: 0.6 }}>{(DE_LIBRARY[m.id]||[]).length}</div>
                   </button>
                 ))}
               </div>
