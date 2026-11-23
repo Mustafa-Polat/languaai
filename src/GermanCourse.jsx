@@ -197,6 +197,70 @@ function Practice({ lesson, prog, saveProg, speak, onExit }) {
   );
 }
 
+// ---------------- Konuşma: diyalog + konuşma görevleri ----------------
+function Speaking({ lesson, speak }) {
+  const [role, setRole] = useState(null); // null | "A" | "B": senin rolün (satırların gizlenir)
+  const [shown, setShown] = useState({});
+  const [modelShown, setModelShown] = useState({});
+  const d = lesson.dialog;
+  return (
+    <div style={{ display: "grid", gap: 14, marginBottom: 18 }}>
+      {d && (
+        <div style={card}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: GOLD, marginBottom: 4 }}>{d.title}</div>
+          <div style={{ fontSize: 12, color: dim, marginBottom: 10 }}>
+            Önce dinle ve oku. Sonra bir rol seç: o rolün cümleleri gizlenir, sen sesli söyle, kontrol etmek için dokun.
+          </div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {[[null, "Hepsini göster"], ["A", "Ben A'yım"], ["B", "Ben B'yim"]].map(([r, label]) => (
+              <button key={String(r)} onClick={() => { setRole(r); setShown({}); }} style={{ ...btn(role === r), flex: 1, padding: "8px 6px", fontSize: 12 }}>{label}</button>
+            ))}
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {d.lines.map((l, i) => {
+              const hidden = role === l.who && !shown[i];
+              return (
+                <div key={i} onClick={() => hidden && setShown((s) => ({ ...s, [i]: true }))}
+                  style={{ display: "flex", gap: 10, alignItems: "flex-start", background: l.who === "A" ? "rgba(96,165,250,0.07)" : "rgba(255,217,90,0.06)", border: "1px solid " + (l.who === "A" ? "rgba(96,165,250,0.2)" : "rgba(255,217,90,0.2)"), borderRadius: 10, padding: "9px 12px", cursor: hidden ? "pointer" : "default" }}>
+                  <span style={{ fontWeight: "bold", color: l.who === "A" ? "#60a5fa" : GOLD, minWidth: 16 }}>{l.who}</span>
+                  <div style={{ flex: 1 }}>
+                    {hidden ? (
+                      <div style={{ fontSize: 14, color: dim }}>Senin sıran: {l.tr} <span style={{ opacity: 0.6 }}>(göstermek için dokun)</span></div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 15 }}><Speaker text={l.de} speak={speak} />{l.de}</div>
+                        <div style={{ fontSize: 12, color: dim, marginTop: 2 }}>{l.tr}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {lesson.speak && lesson.speak.length > 0 && (
+        <div style={card}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: GOLD, marginBottom: 4 }}>Konuşma görevleri</div>
+          <div style={{ fontSize: 12, color: dim, marginBottom: 10 }}>Görevi sesli olarak Almanca söyle, sonra örnek cevaba bak.</div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {lesson.speak.map((t, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 12px" }}>
+                <div style={{ fontSize: 14, marginBottom: 8 }}>{i + 1}. {t.task}</div>
+                {modelShown[i] ? (
+                  <div style={{ fontSize: 15, color: "#34d399" }}><Speaker text={t.model} speak={speak} />{t.model}</div>
+                ) : (
+                  <button onClick={() => setModelShown((s) => ({ ...s, [i]: true }))} style={{ ...btn(false), padding: "7px 12px", fontSize: 12 }}>Örnek cevabı göster</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------------- Ders ekranı ----------------
 function Lesson({ lesson, prog, saveProg, speak, onBack }) {
   const [tab, setTab] = useState("words");
@@ -228,7 +292,7 @@ function Lesson({ lesson, prog, saveProg, speak, onBack }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-        {[["words", "Kelimeler"], ["grammar", "Gramer"], ["examples", "Örnekler"]].map(([k, label]) => (
+        {[["words", "Kelimeler"], ["grammar", "Gramer"], ["examples", "Örnekler"], ...(lesson.dialog || lesson.speak ? [["speaking", "Konuşma"]] : [])].map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)} style={{ ...btn(tab === k), flex: 1 }}>{label}</button>
         ))}
       </div>
@@ -288,6 +352,8 @@ function Lesson({ lesson, prog, saveProg, speak, onBack }) {
           ))}
         </div>
       )}
+
+      {tab === "speaking" && <Speaking lesson={lesson} speak={speak} />}
 
       <button onClick={() => setPractice(true)} style={{ width: "100%", background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 14, color: "#0a0a0f", padding: "16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit" }}>
         Alıştırmaya başla {best >= 0 && best !== undefined ? "(en iyi: %" + best + ")" : ""}
