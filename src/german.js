@@ -7,6 +7,7 @@ import { shuffle } from "./srs";
 
 import { M6 } from "./german_m6";
 import { M7 } from "./german_m7";
+import { M8 } from "./german_m8";
 
 const w = (art, de, tr, pl, fem) => ({ art, de, tr, pl: pl || null, fem: fem || null });
 const v = (de, tr) => ({ art: null, de, tr, pl: null, fem: null });
@@ -1016,6 +1017,7 @@ export const DE_MODULES = [
   },
   M6,
   M7,
+  M8,
 ];
 
 // ---- Yardımcılar ----

@@ -41,7 +41,7 @@ test("konuşma alanları: diyalog satırlarında A/B, Almanca ve Türkçe; göre
       expect(l.dialog.lines.length).toBeGreaterThan(3);
       for (const x of l.dialog.lines) { expect(["A", "B"]).toContain(x.who); expect(x.de && x.tr).toBeTruthy(); }
     }
-    for (const t of l.speak || []) expect(t.task && t.model).toBeTruthy();
+    for (const t of [...(l.speak || []), ...(l.write || [])]) expect(t.task && t.model).toBeTruthy();
   }
 });
 
@@ -67,5 +67,6 @@ test("M6 ve sonraki modüller önceki modüllerdeki kelimeleri tekrar etmez", ()
 test("kütüphane ve alıştırma üretici M6 için çalışır", () => {
   expect(DE_LIBRARY.M6.length).toBeGreaterThan(40);
   expect(DE_LIBRARY.M7.length).toBeGreaterThan(60);
+  expect(DE_LIBRARY.M8.length).toBeGreaterThan(60);
   for (const { l } of lessons) expect(buildPractice(l).length).toBeGreaterThan(5);
 });

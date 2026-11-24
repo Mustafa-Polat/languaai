@@ -202,6 +202,7 @@ function Speaking({ lesson, speak }) {
   const [role, setRole] = useState(null); // null | "A" | "B": senin rolün (satırların gizlenir)
   const [shown, setShown] = useState({});
   const [modelShown, setModelShown] = useState({});
+  const [writeShown, setWriteShown] = useState({});
   const d = lesson.dialog;
   return (
     <div style={{ display: "grid", gap: 14, marginBottom: 18 }}>
@@ -236,6 +237,24 @@ function Speaking({ lesson, speak }) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+      {lesson.write && lesson.write.length > 0 && (
+        <div style={card}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: GOLD, marginBottom: 4 }}>Yazma görevleri</div>
+          <div style={{ fontSize: 12, color: dim, marginBottom: 10 }}>Önce kendin yaz (kâğıda ya da not defterine), sonra örnek metinle karşılaştır.</div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {lesson.write.map((t, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 12px" }}>
+                <div style={{ fontSize: 14, marginBottom: 8 }}>{i + 1}. {t.task}</div>
+                {writeShown[i] ? (
+                  <div style={{ fontSize: 15, color: "#34d399", whiteSpace: "pre-line", lineHeight: 1.5 }}>{t.model}</div>
+                ) : (
+                  <button onClick={() => setWriteShown((s) => ({ ...s, [i]: true }))} style={{ ...btn(false), padding: "7px 12px", fontSize: 12 }}>Örnek metni göster</button>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -292,7 +311,7 @@ function Lesson({ lesson, prog, saveProg, speak, onBack }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-        {[["words", "Kelimeler"], ["grammar", "Gramer"], ["examples", "Örnekler"], ...(lesson.dialog || lesson.speak ? [["speaking", "Konuşma"]] : [])].map(([k, label]) => (
+        {[["words", "Kelimeler"], ["grammar", "Gramer"], ["examples", "Örnekler"], ...(lesson.dialog || lesson.speak || lesson.write ? [["speaking", "Konuşma"]] : [])].map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)} style={{ ...btn(tab === k), flex: 1 }}>{label}</button>
         ))}
       </div>
