@@ -63,6 +63,13 @@ function Logo({ size = 32 }) {
   );
 }
 
+// Uzun tek kelimeler kartın dışına taşmasın: en uzun kelimeye göre yazı boyutunu küçültür
+function fitFont(text, max, min, avail) {
+  const longest = Math.max(1, ...String(text || "").split(/\s+/).map((w) => [...w].length));
+  return Math.round(Math.max(min, Math.min(max, avail / (0.6 * longest))));
+}
+const WRAP = { overflowWrap: "anywhere", minWidth: 0 }; // aşırı uzun kelimelerde son çare olarak böl
+
 const TABS = [["home", "🏠", "Ana"], ["library", "📖", "Liste"], ["stats", "📊", "İlerleme"]];
 
 const emptyProgress = () => ({ learned: {}, qCorrect: 0, qTotal: 0 });
@@ -400,6 +407,7 @@ export default function App() {
     btn: (a) => ({ background: a ? "linear-gradient(135deg,#ffe58a,#f7b928)" : "rgba(255,255,255,0.05)", border: a ? "1px solid rgba(255,217,90,0.6)" : "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: a ? "#1a1403" : "#e8e4d9", padding: "10px 16px", fontSize: 13, fontWeight: a ? "bold" : "normal", cursor: "pointer", fontFamily: "inherit", boxShadow: a ? "0 4px 14px rgba(247,185,40,0.28)" : "none" }),
   };
 
+  const vw = Math.min(typeof window !== "undefined" ? window.innerWidth : 390, 660);
   const showTabs = screen !== "flashcard" && screen !== "quiz"; // çalışma ekranlarında dikkat dağıtmasın
   const finePointer = typeof window !== "undefined" && !!window.matchMedia &&
     window.matchMedia("(hover: hover) and (pointer: fine)").matches; // klavye ipuçları yalnızca masaüstünde
@@ -557,7 +565,7 @@ export default function App() {
               <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(245,158,11,0.28)", color: "#1a1403", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#128218;</div>
                 Flashcard
-                <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{curLevelLabel} - {!libReady ? "yukleniyor..." : dk.due + dk.fresh > 0 ? dk.due + " tekrar, " + dk.fresh + " yeni" : "erken tekrar"}</div>
+                <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4, fontWeight: "normal" }}>{curLevelLabel} - {!libReady ? "yükleniyor..." : dk.due + dk.fresh > 0 ? dk.due + " tekrar, " + dk.fresh + " yeni" : "erken tekrar"}</div>
               </button>
               <button onClick={startQuiz} style={{ background: "linear-gradient(135deg,#60a5fa,#2563eb)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(37,99,235,0.3)", color: "#fff", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#129504;</div>
@@ -597,12 +605,12 @@ export default function App() {
               </div>
             ) : deck[cardIdx] ? (
               <div>
-                <div onClick={() => setFlipped(f => !f)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "52px 32px", minHeight: 260, textAlign: "center", cursor: "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div onClick={() => setFlipped(f => !f)} style={{ background: flipped ? "rgba(255,217,90,0.07)" : "rgba(255,255,255,0.04)", border: "1px solid " + (flipped ? "rgba(255,217,90,0.3)" : "rgba(255,255,255,0.09)"), borderRadius: 24, padding: "48px 20px", minHeight: 260, textAlign: "center", cursor: "pointer", transition: "all 0.3s", marginBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {!flipped ? (
                     <div>
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>{lang === "ru" ? "🇷🇺 Rusça" : lang === "de" ? "🇩🇪 Almanca" : (level + " - İngilizce")}</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
-                        <div style={{ fontSize: 48, fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
+                        <div style={{ ...WRAP, fontSize: fitFont(deck[cardIdx].word, 48, 22, vw - 134), fontWeight: "bold", color: "#ffd95a" }}>{deck[cardIdx].word}</div>
                         <button onClick={e => { e.stopPropagation(); speak(deck[cardIdx].word, lang); }} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
                       <div style={{ fontSize: 13, color: "rgba(232,228,217,0.25)", marginTop: 18 }}>Çevir / Geri Dön</div>
@@ -611,7 +619,7 @@ export default function App() {
                     <div style={{ width: "100%" }}>
                       <div style={{ fontSize: 11, color: "rgba(255,217,90,0.45)", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Türkçe</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 18 }}>
-                        <div style={{ fontSize: 32, fontWeight: "bold" }}>{deck[cardIdx].turkish}</div>
+                        <div style={{ ...WRAP, fontSize: fitFont(deck[cardIdx].turkish, 32, 20, vw - 130), fontWeight: "bold" }}>{deck[cardIdx].turkish}</div>
                         <button onClick={() => speak(deck[cardIdx].word, lang)} style={{ background: "rgba(255,217,90,0.12)", border: "1px solid rgba(255,217,90,0.3)", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                       </div>
                       <div style={{ background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "12px 18px", fontSize: 14, color: "rgba(232,228,217,0.6)", fontStyle: "italic" }}>
@@ -644,7 +652,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
               <button onClick={() => nav("home")} style={S.btn(false)}>Geri</button>
-              <span style={{ fontSize: 13, color: "#60a5fa" }}>{sessionScore.c}/{sessionScore.t} dogru</span>
+              <span style={{ fontSize: 13, color: "#60a5fa" }}>{sessionScore.c}/{sessionScore.t} doğru</span>
               <span style={{ fontSize: 12, color: "rgba(232,228,217,0.35)" }}>{level}</span>
             </div>
             {quiz && (
@@ -652,7 +660,7 @@ export default function App() {
                 <div style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 20, padding: "32px 24px", marginBottom: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 12, color: "rgba(96,165,250,0.55)", letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>Bu kelimenin İngilizce anlamı nedir?</div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
-                    <div style={{ fontSize: 42, fontWeight: "bold", color: "#60a5fa" }}>{quiz.word}</div>
+                    <div style={{ ...WRAP, fontSize: fitFont(quiz.word, 42, 20, vw - 142), fontWeight: "bold", color: "#60a5fa" }}>{quiz.word}</div>
                     <button onClick={() => speak(quiz.word, lang)} style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "50%", width: 42, height: 42, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title="Telaffuzu dinle">🔊</button>
                   </div>
                 </div>
@@ -670,7 +678,7 @@ export default function App() {
                         <span style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: sel !== null && isOk ? "#34d399" : sel !== null && isSel ? "#f87171" : "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: "bold", color: sel !== null && (isOk || isSel) ? "#0a0a0f" : color }}>
                           {sel !== null && isOk ? "V" : sel !== null && isSel ? "X" : ["A","B","C","D"][i]}
                         </span>
-                        {opt}
+                        <span style={{ ...WRAP, flex: 1 }}>{opt}</span>
                       </button>
                     );
                   })}
@@ -744,12 +752,12 @@ export default function App() {
             <div style={{ display: "grid", gap: 5, maxHeight: "60vh", overflowY: "auto" }}>
               {libWords.slice(0, 200).map((w, i) => (
                 <div key={i} style={{ background: prog.learned[cardKey(w)] ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (prog.learned[cardKey(w)] ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
+                  <div style={WRAP}>
                     <button onClick={() => speak(w.word, lang)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 14, padding: "0 6px 0 0", verticalAlign: "middle" }} title="Telaffuzu dinle">🔊</button>
                     <span style={{ fontWeight: "bold", color: prog.learned[cardKey(w)] ? "#34d399" : "#e8e4d9", marginRight: 10, fontSize: 14 }}>{w.word}</span>
                     <span style={{ fontSize: 13, color: "rgba(232,228,217,0.4)" }}>{w.turkish}</span>
                   </div>
-                  {prog.learned[cardKey(w)] && <span style={{ fontSize: 14 }}>ok</span>}
+                  {prog.learned[cardKey(w)] && <span style={{ fontSize: 14, color: "#34d399", flexShrink: 0 }}>&#10003;</span>}
                 </div>
               ))}
               {libWords.length > 200 && <div style={{ textAlign: "center", padding: 14, color: "rgba(232,228,217,0.25)", fontSize: 12 }}>+{libWords.length - 200} kelime daha</div>}

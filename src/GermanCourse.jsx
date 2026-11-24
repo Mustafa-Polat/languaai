@@ -4,7 +4,7 @@ import { shuffle } from "./srs";
 
 const GOLD = "#ffd95a";
 const dim = "rgba(232,228,217,0.45)";
-const card = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 16, padding: "16px 18px" };
+const card = { overflowWrap: "break-word", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 16, padding: "16px 18px" };
 const btn = (active) => ({
   background: active ? GOLD : "rgba(255,255,255,0.06)", border: "none", borderRadius: 10,
   color: active ? "#0a0a0f" : "#e8e4d9", padding: "10px 16px", fontSize: 13,
@@ -76,7 +76,7 @@ function Question({ item, onNext, speak }) {
       {item.t === "article" && (
         <div>
           <div style={{ fontSize: 13, color: dim, marginBottom: 6 }}>Doğru artikeli seç</div>
-          <div style={{ fontSize: 26, fontWeight: "bold", color: GOLD, marginBottom: 4 }}>
+          <div style={{ fontSize: item.q.length > 14 ? 20 : 26, fontWeight: "bold", color: GOLD, marginBottom: 4, overflowWrap: "anywhere" }}>
             <Speaker text={item.q} speak={speak} size={20} />___ {item.q}
           </div>
           <div style={{ fontSize: 13, color: dim, marginBottom: 16 }}>{item.tr}</div>
@@ -304,7 +304,7 @@ function Lesson({ lesson, prog, saveProg, speak, onBack }) {
             const on = !!prog.learned[wordKey(e)];
             return (
               <div key={i} style={{ background: on ? "rgba(52,211,153,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (on ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.07)"), borderRadius: 9, padding: "9px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", minWidth: 0, overflowWrap: "anywhere" }}>
                   <Speaker text={e.art ? e.art + " " + e.de : e.de} speak={speak} />
                   <Art art={e.art} />
                   <span style={{ fontWeight: "bold", fontSize: 15, marginRight: 8 }}>{e.de}</span>

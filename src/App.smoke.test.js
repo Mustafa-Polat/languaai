@@ -264,7 +264,7 @@ test("ana sayfa: sayılar yüklemeden görünür, İngilizce listesi yüklenince
   const t = textOf(container);
   expect(t).toContain("4124 İng + 568 Rus");
   expect(t).toMatch(/\d+ tekrar, \d+ yeni/);
-  expect(t).not.toContain("yukleniyor");
+  expect(t).not.toContain("yükleniyor");
 });
 
 test("eski ilerleme ilk girişte taşınır ve sunucuya yazılır", async () => {
