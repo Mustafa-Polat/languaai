@@ -469,3 +469,17 @@ test("şifre değiştir: Vazgeç formu kapatır ve alanları temizler", async ()
   await act(async () => { byText(container, "Şifre Değiştir").click(); });
   expect(container.querySelectorAll('input[type="password"]')[0].value).toBe("");
 });
+
+test("Rusça gramer: ana sayfadan ders listesi ve ilk ders açılır", async () => {
+  await act(async () => { root.render(<App />); });
+  await flush();
+  const ruBtn = buttons(container).find((b) => /Rus/.test(b.textContent) && b.textContent.length < 20);
+  await act(async () => { ruBtn.click(); });
+  await flush();
+  await act(async () => { byText(container, "Rusça Gramer Dersleri").click(); });
+  expect(textOf(container)).toContain("0 / 5 ders tamamlandı");
+  await act(async () => { byText(container, "Знакомство").click(); });
+  expect(textOf(container)).toContain("Şahıs zamirleri");
+  await act(async () => { byText(container, "Alıştırmaya başla").click(); });
+  expect(textOf(container)).toMatch(/1 ?\/ ?12/);
+});

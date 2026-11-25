@@ -12,7 +12,8 @@ const btn = (active) => ({
 });
 const ARTICLE_COLOR = { der: "#60a5fa", die: "#f87171", das: "#34d399" };
 
-const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
+// ё ve е Rusça yazıda birbirinin yerine kullanıldığı için eşit sayılır
+const norm = (s) => s.trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/[.!?]+$/, "");
 
 // Ders kodlarından tamamlanma kaydı: prog.learned["__de_lesson_<id>"] = en iyi yüzde
 export const lessonKey = (id) => "__de_lesson_" + id;
@@ -31,7 +32,7 @@ function Art({ art }) {
 }
 
 // ---------------- Tek soru ----------------
-function Question({ item, onNext, speak }) {
+export function Question({ item, onNext, speak, chars = ["ä", "ö", "ü", "ß"] }) {
   const [sel, setSel] = useState(null);
   const [val, setVal] = useState("");
   const [tokens] = useState(() => (item.t === "order" ? shuffle(item.words.map((w, i) => ({ w, i }))) : []));
@@ -102,8 +103,8 @@ function Question({ item, onNext, speak }) {
             onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => e.key === "Enter" && checkFill()}
             placeholder="Cevabın..."
             style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#e8e4d9", padding: "12px 16px", fontSize: 16, fontFamily: "inherit", outline: "none", marginBottom: 8 }} />
-          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-            {["ä", "ö", "ü", "ß"].map((c) => (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            {chars.map((c) => (
               <button key={c} disabled={result !== null} onClick={() => setVal((v) => v + c)} style={{ ...btn(false), padding: "6px 14px", fontSize: 15 }}>{c}</button>
             ))}
           </div>
