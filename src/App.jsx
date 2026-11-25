@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import GermanCourse from "./GermanCourse";
+import RussianCourse from "./RussianCourse";
+import { RU_LESSONS } from "./russian_grammar";
 import ChangePassword from "./ChangePassword";
 import { DE_LIBRARY, DE_MODULES } from "./german";
 import {
@@ -561,6 +563,13 @@ export default function App() {
                 <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, fontWeight: "normal" }}>{DE_MODULES.reduce((n, m) => n + m.lessons.length, 0)} ders - gramer, örnekler, alıştırmalar</div>
               </button>
             )}
+            {lang === "ru" && (
+              <button onClick={() => nav("russian")} style={{ width: "100%", background: "linear-gradient(135deg,#34d399,#059669)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(5,150,105,0.3)", color: "#052e1c", padding: "20px 16px", fontSize: 16, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center", marginBottom: 12 }}>
+                <div style={{ fontSize: 26, marginBottom: 4 }}>&#127891;</div>
+                Rusça Gramer Dersleri
+                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, fontWeight: "normal" }}>{RU_LESSONS.length} ders - gramer, örnekler, alıştırmalar</div>
+              </button>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <button onClick={startCards}style={{ background: "linear-gradient(135deg,#ffd95a,#f59e0b)", border: "none", borderRadius: 18, boxShadow: "0 8px 22px rgba(245,158,11,0.28)", color: "#1a1403", padding: "22px 16px", fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#128218;</div>
@@ -580,6 +589,13 @@ export default function App() {
           <div>
             <button onClick={() => nav("home")} style={{ ...S.btn(false), marginBottom: 14 }}>Ana sayfa</button>
             <GermanCourse prog={prog} saveProg={saveProg} speak={speak} />
+          </div>
+        )}
+
+        {screen === "russian" && (
+          <div>
+            <button onClick={() => nav("home")} style={{ ...S.btn(false), marginBottom: 14 }}>Ana sayfa</button>
+            <RussianCourse prog={prog} saveProg={saveProg} speak={speak} />
           </div>
         )}
 
@@ -831,7 +847,7 @@ export default function App() {
         <nav aria-label="Ana menü" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(10,10,15,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,217,90,0.12)", paddingBottom: "env(safe-area-inset-bottom)" }}>
           <div style={{ maxWidth: 660, margin: "0 auto", display: "flex" }}>
             {TABS.map(([s, icon, label]) => {
-              const active = screen === s || (s === "home" && screen === "german");
+              const active = screen === s || (s === "home" && (screen === "german" || screen === "russian"));
               return (
                 <button key={s} onClick={() => nav(s)} aria-current={active ? "page" : undefined}
                   style={{ flex: 1, background: "transparent", border: "none", padding: "8px 4px 8px", cursor: "pointer", fontFamily: "inherit", color: active ? "#ffd95a" : "rgba(232,228,217,0.45)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
