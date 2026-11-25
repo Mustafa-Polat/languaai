@@ -90,7 +90,7 @@ export default function App() {
   const [screen, setScreen] = useState("home");
   const [lang, setLang] = useState(() => readPref("lang", ["en", "ru", "de"], "en")); // "en" | "ru" | "de"
   const [level, setLevel] = useState(() => readPref("level", LEVELS, "A1"));
-  const [ruLevel, setRuLevel] = useState(() => readPref("ruLevel", ["L1", "L2", "L3", "L4", "L5"], "L1"));
+  const [ruLevel, setRuLevel] = useState(() => readPref("ruLevel", ["L1", "L2", "L3", "L4", "L5", "L6"], "L1"));
   const [deLevel, setDeLevel] = useState(() => readPref("deLevel", DE_MODULES.map(m => m.id), "M1"));
   const [confirmReset, setConfirmReset] = useState(false);
   const [prog, setProg] = useState(emptyProgress());
@@ -541,13 +541,14 @@ export default function App() {
                   ))}
                 </div>
               ) : (
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
                   {[
                     ["L1","1–5", levelCount("ru", "L1")],
                     ["L2","6–10", levelCount("ru", "L2")],
                     ["L3","11–15", levelCount("ru", "L3")],
                     ["L4","16–20", levelCount("ru", "L4")],
                     ["L5","21–25", levelCount("ru", "L5")],
+                    ["L6","26–30", levelCount("ru", "L6")],
                   ].map(([l, label, count]) => (
                     <button key={l} onClick={() => setRuLevel(l)} style={{ ...S.btn(ruLevel === l), flex: 1, minWidth: 60, padding: "10px 0", fontSize: 12 }}>
                       {label}<div style={{ fontSize: 9, opacity: 0.6, marginTop: 2 }}>{count}</div>
@@ -749,13 +750,14 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 14 }}>
                 {[
                   ["L1","1–5", levelCount("ru", "L1")],
                   ["L2","6–10", levelCount("ru", "L2")],
                   ["L3","11–15", levelCount("ru", "L3")],
                   ["L4","16–20", levelCount("ru", "L4")],
                   ["L5","21–25", levelCount("ru", "L5")],
+                  ["L6","26–30", levelCount("ru", "L6")],
                 ].map(([l, label, count]) => (
                   <button key={l} onClick={() => setRuLevel(l)} style={{ ...S.btn(ruLevel === l), flex: 1, minWidth: 55 }}>
                     {label}<div style={{ fontSize: 9, opacity: 0.6 }}>{count}</div>

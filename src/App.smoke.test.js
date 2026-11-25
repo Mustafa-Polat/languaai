@@ -262,7 +262,7 @@ test("ana sayfa: sayılar yüklemeden görünür, İngilizce listesi yüklenince
   await act(async () => { root.render(<App />); });
   await flush();
   const t = textOf(container);
-  expect(t).toContain("4124 İng + 568 Rus");
+  expect(t).toContain("4124 İng + 616 Rus");
   expect(t).toMatch(/\d+ tekrar, \d+ yeni/);
   expect(t).not.toContain("yükleniyor");
 });
@@ -287,7 +287,7 @@ test("göç zaten yapılmışsa açılışta gereksiz yazma olmaz", async () => 
   await act(async () => { root.render(<App />); });
   await flush();
   expect(mockState.upserts).toHaveLength(0);
-  expect(textOf(container)).toContain("4124 İng + 568 Rus");
+  expect(textOf(container)).toContain("4124 İng + 616 Rus");
 });
 
 test("yeni kullanıcı (ilerleme satırı yok) sorunsuz açılır ve ilk kart kaydedilir", async () => {
